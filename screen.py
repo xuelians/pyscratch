@@ -204,11 +204,11 @@ def __init_event():
         # print(i, __EVENT_DICT[i])
 
 
-def init(caption="", width=800, height=600, resize=True):
+def init(caption="", width=800, height=600, resize=True, status_bar=True):
     """
     create a screen
     """
-    global __SCREEN_OBJ, __CLOCK_OBJ, __BACKDROP, __SCREEN_FONT
+    global __SCREEN_OBJ, __CLOCK_OBJ, __BACKDROP, __SCREEN_FONT, __SCREEN_SIZE
     if __SCREEN_OBJ is not None:
         return
     # init window
@@ -216,8 +216,12 @@ def init(caption="", width=800, height=600, resize=True):
     pygame.display.set_caption(caption)
     flags = 0
     flags += pygame.RESIZABLE if resize else 0
-    __SCREEN_OBJ = pygame.display.set_mode(__SCREEN_SIZE, 0, 32)
     __SCREEN_FONT = pygame.font.SysFont(__FONT_FAMILY, __FONT_SIZE)
+    if status_bar:
+        __SCREEN_SIZE = (width, height + __SCREEN_FONT.get_linesize())
+    else:
+        __SCREEN_SIZE = (width, height)
+    __SCREEN_OBJ = pygame.display.set_mode(__SCREEN_SIZE, 0, 32)
     __CLOCK_OBJ = pygame.time.Clock()
     __BACKDROP = SpriteObj('__backdrop__')
     # _print_cb()

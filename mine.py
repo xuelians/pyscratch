@@ -148,16 +148,16 @@ def create_blocks(row, column):
             b.open = False
             b.flag = False
     # put mine
-    put_mines(row, column, 6)
+    put_mines(row, column, 10)
 
 
 def main():
 
-    screen.init()
+    screen.init('Mine', 640, 640, False)
     screen.set_event('MouseButtonDown', on_mouse_down)
     screen.set_event('KeyDown', on_key_down)
 
-    create_blocks(6, 10)
+    create_blocks(10, 10)
 
     while screen.is_quit() == False:
         screen.run()

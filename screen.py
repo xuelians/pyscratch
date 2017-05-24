@@ -5,30 +5,9 @@ import sys
 from pygame.locals import *
 from pygame.math import Vector2 as Vec2d
 
-# config
-__SCREEN_RESIZABLE = True
-__SCREEN_SIZE = (800, 600)
-__FONT_FAMILY = 'Console'
-__FONT_SIZE = 16
-
-# global variables
-__SCREEN_OBJ = None
-__SCREEN_FONT = None
-__CLOCK_OBJ = None
-__EVENT_DICT = {}  # event id (int) : event name (string)
-__EVENT_CB = {}  # event name (string) : event cb (function)
-__DISPLAY_OBJS = {}  # obj_id: obj
-__SPRITE_OBJS = {}
-__QUIT = False
-__BACKDROP = None
-__SURF_DICT = {}  # save load image surface
-__KEY_PRESS = []  # for performance
-__MOUSE_PRESS = (0, 0, 0)
-__MOUSE_POS = (0, 0)
-__MOUSE_REL = (0, 0)
-
 
 class SpriteObj():
+    """Sprite Object"""
     __counter = 0
 
     def __init__(self, name=''):
@@ -41,9 +20,10 @@ class SpriteObj():
         self._surf = None
         self._rect = None
         self._costume = []
-        self._cur_costume = 0
+        self._costume_used = 0
         # for motion
         self.vdir = Vec2d(0, -1)  # point up
+        self.vpos = Vec2d(0, 0) # position
         # init actions
 
     @property
@@ -64,6 +44,7 @@ class SpriteObj():
     @property
     def rect(self):
         """sprite display position (refer to pygame.rect)"""
+        print(self._rect)
         return self._rect
 
     def show(self):
@@ -80,55 +61,66 @@ class SpriteObj():
 
     # Motions Methods
     def turn_left(self, angle):
-        """Turn to the left"""
+        """
+        Turn a angle to the left on current moving direction
+        """
         self.vdir = self.vdir.rotate(-angle)
 
     def turn_right(self, angle):
-        """Turn to the right"""
+        """Turn a right to the right on current moving direction"""
         self.vdir = self.vdir.rotate(angle)
 
     def point_dir(self, angle):
-        """Set the direction of the current sprite"""
+        """
+        Set the angle as current moving direction
+        - angle: 0~360, 0 for up, 90 for right, 180 for down, 270 for left
+        """
         self.vdir = Vec2d(0, -1).rotate(angle)
 
     def point_mouse(self):
-        """Set the direction of the current sprite"""
-        mdir = Vec2d(pygame.mouse.get_pos()) - \
-            Vec2d(self._rect.centerx, self._rect.centery)
+        """Set current moving direction to mouse postion"""
+        mdir = Vec2d(pygame.mouse.get_pos()) - self.vpos
         if mdir != (0, 0):
             self.vdir = mdir.normalize()
 
-    def move(self, steps):
-        self.vpos = Vec2d(self._rect.centerx, self._rect.centery)
-        self.vpos += self.vdir * steps
-        self._rect.center = self.vpos
+    def __move_to_vpos(self):
+        # print(self.vpos[0], self.vpos[1])
+        self._rect.center = (self.vpos[0], self.vpos[1])
 
-        # self.vpos += self.vdir * self.speed * self.time_passed / self.speed_scale
-        # self.vpos.x = fixup_range(self.vpos.x, 0, 800)
-        # self.vpos.y = fixup_range(self.vpos.y, 0, 600)
+    def move(self, steps):
+        """move steps on current moving direction"""
+        # self.vpos = Vec2d(self._rect.centerx, self._rect.centery)
+        self.vpos += self.vdir * steps
+        self.__move_to_vpos()
 
     def move_to(self, center_x, center_y):
         """
         set sprite center to given position (pixel x & y) with sprite left-top
         """
-        self._rect = self._surf.get_rect()
-        self._rect.center = (center_x, center_y)
+        # self._rect = self._surf.get_rect()
+        # self._rect.center = (center_x, center_y)
+        self.vpos = Vec2d(center_x, center_y)
+        self.__move_to_vpos()
 
     def change_x(self, amount):
         """Change the x position by this amount"""
-        self._rect.centerx += amount
+        self.vpos[0] += amount
+        self.__move_to_vpos()
 
     def change_y(self, amount):
         """Change the y position by this amount"""
-        self._rect.centery += amount
+        self.vpos[1] += amount
+        self.__move_to_vpos()
 
     def set_x(self, amount):
         """Set the x position of a sprite"""
-        self._rect.centerx = amount
+        self.vpos[0] = amount
+        self.__move_to_vpos()
 
     def set_y(self, amount):
         """Change the y position by this amount"""
-        self._rect.centery = amount
+        self.vpos[1] = amount
+        self.__move_to_vpos()
 
     # Looks Methods
     def __add_costume(self, image_surf, index=None):
@@ -174,7 +166,9 @@ class SpriteObj():
         """
         try:
             self._surf = self._costume[index]
-            self._cur_costume = index
+            self._rect = self._surf.get_rect()
+            self.__move_to_vpos()
+            self._costume_used = index
         except IndexError as err:
             pass
 
@@ -182,50 +176,15 @@ class SpriteObj():
         """
         Switches to the next costume in the sprite's costume list
         """
-        self._cur_costume += 1
-        if self._cur_costume >= len(self._costume):
-            self._cur_costume = 0  # back to first costume
+        self._costume_used += 1
+        if self._costume_used >= len(self._costume):
+            self._costume_used = 0  # back to first costume
         try:
-            self._surf = self._costume[self._cur_costume]
+            self._surf = self._costume[self._costume_used]
+            self._rect = self._surf.get_rect()
+            self.__move_to_vpos()
         except IndexError as err:
             pass
-
-
-def __init_event():
-    global __EVENT_DICT, __EVENT_CB
-    for i in range(0, pygame.NUMEVENTS):
-        name = pygame.event.event_name(i)
-        if name in ['NoEvent', 'Unknown']:
-            continue
-        if i > 24:
-            name = '%s%d' % (name, i - 24)
-        __EVENT_DICT[i] = name
-        __EVENT_CB[name] = None
-        # print(i, __EVENT_DICT[i])
-
-
-def init(caption="", width=800, height=600, resize=True, status_bar=True):
-    """
-    create a screen
-    """
-    global __SCREEN_OBJ, __CLOCK_OBJ, __BACKDROP, __SCREEN_FONT, __SCREEN_SIZE
-    if __SCREEN_OBJ is not None:
-        return
-    # init window
-    pygame.init()
-    pygame.display.set_caption(caption)
-    flags = 0
-    flags += pygame.RESIZABLE if resize else 0
-    __SCREEN_FONT = pygame.font.SysFont(__FONT_FAMILY, __FONT_SIZE)
-    if status_bar:
-        __SCREEN_SIZE = (width, height + __SCREEN_FONT.get_linesize())
-    else:
-        __SCREEN_SIZE = (width, height)
-    __SCREEN_OBJ = pygame.display.set_mode(__SCREEN_SIZE, 0, 32)
-    __CLOCK_OBJ = pygame.time.Clock()
-    __BACKDROP = SpriteObj('__backdrop__')
-    # _print_cb()
-    __init_event()
 
 
 def set_event(name_or_id, func=None):
@@ -248,17 +207,19 @@ def set_event(name_or_id, func=None):
     - 24~31: UserEvent, func(code)
     """
     helpmsg = ''
-    for eid, name in __EVENT_DICT.items():
+    for eid, name in this.__event_dict.items():
         helpmsg += '\n\t%2d: %s' % (eid, name)
-    name = __EVENT_DICT.get(name_or_id, None) if isinstance(
+    name = this.__event_dict.get(name_or_id, None) if isinstance(
         name_or_id, int) else name_or_id
-    if name not in __EVENT_CB:
+    if name not in this.__event_cb:
         raise ValueError('invalid event [%s], please use below id or name:%s' %
                          (name_or_id, helpmsg))
-    __EVENT_CB[name] = func
+    this.__event_cb[name] = func
 
-def is_quit():
-    return __QUIT
+
+def closed():
+    """return True if screen closed (right-top close button clicked)"""
+    return this.__screen_closed
 
 
 def draw_image(image_file, pos_x, pos_y):
@@ -271,64 +232,13 @@ def draw_image(image_file, pos_x, pos_y):
     return obj
 
 
-def run(wait_tick=50):
-    """waiting event from screen"""
-    if __SCREEN_OBJ is None:
-        init()
-    tick_passed = __CLOCK_OBJ.tick(wait_tick)
-    # save key and mouse to global
-    global __KEY_PRESS, __MOUSE_POS, __MOUSE_REL, __MOUSE_BTN
-    __KEY_PRESS = __convert_pressed_keys()
-    __MOUSE_POS = pygame.mouse.get_pos()
-    __MOUSE_REL = pygame.mouse.get_rel()
-    __MOUSE_BTN = pygame.mouse.get_pressed()
-    # event handle
-    for event in pygame.event.get():
-        # print(pygame.event.event_name(event.type))
-        # pre-process
-        event_name = pygame.event.event_name(event.type)
-        if event_name == 'Quit':
-            global __QUIT
-            __QUIT = True
-        # invoke callback
-        func = __EVENT_CB.get(event_name, None)
-        if func:
-            if event_name == 'Quit':
-                func()
-            elif event_name == 'ActiveEvent':
-                func(event.gain, event.state)
-            elif event_name == 'KeyDown':
-                func(event.key, event.mod, event.unicode)
-            elif event_name == 'KeyUp':
-                func(event.key, event.mod)
-            elif event_name == 'MouseMotion':
-                func(event.pos, event.rel, event.buttons)
-            elif event_name == 'MouseButtonUp':
-                func(event.pos, event.button)
-            elif event_name == 'MouseButtonDown':
-                func(event.pos, event.button)
-            elif event_name == 'JoyAxisMotion':
-                func(event.joy, event.axis, event.value)
-            elif event_name == 'JoyBallMotion':
-                func(event.joy, event.ball, event.rel)
-            elif event_name == 'JoyHatMotion':
-                func(event.joy, event.hat, event.value)
-            elif event_name == 'JoyButtonUp':
-                func(event.joy, event.button)
-            elif event_name == 'JoyButtonDown':
-                func(event.joy, event.button)
-            elif event_name == 'VideoResize':
-                func(event.size, event.w, event.h)
-            elif event_name == 'VideoExpose':
-                func()
-            elif event_name.startswith('UserEvent'):
-                func(event.code)
-            else:
-                raise ValueError('unknown event name [%s]' % event_name)
-    return tick_passed
+def sleep(milliseconds):
+    """entry sleep mode for milliseconds, return integer as actual sleep ticks"""
+    return this.__clock.tick(milliseconds)
 
 
 def __convert_pressed_keys():
+    """convert pressed key list to name list"""
     name = []
     press = pygame.key.get_pressed()
     for i in range(0, len(press)):
@@ -337,38 +247,97 @@ def __convert_pressed_keys():
     return name
 
 
+def __update_key_mouse():
+    """save key and mouse to global"""
+    this.key_press = __convert_pressed_keys()
+    this.mouse_pos = pygame.mouse.get_pos()
+    this.mouse_rel = pygame.mouse.get_rel()
+    this.mouse_btn = pygame.mouse.get_pressed()
+
+
+def __call_user_cb(event):
+    event_name = pygame.event.event_name(event.type)
+    func = this.__event_cb.get(event_name, None)
+    if func:
+        if event_name == 'Quit':
+            func()
+        elif event_name == 'ActiveEvent':
+            func(event.gain, event.state)
+        elif event_name == 'KeyDown':
+            func(event.key, event.mod, event.unicode)
+        elif event_name == 'KeyUp':
+            func(event.key, event.mod)
+        elif event_name == 'MouseMotion':
+            func(event.pos, event.rel, event.buttons)
+        elif event_name == 'MouseButtonUp':
+            func(event.pos, event.button)
+        elif event_name == 'MouseButtonDown':
+            func(event.pos, event.button)
+        elif event_name == 'JoyAxisMotion':
+            func(event.joy, event.axis, event.value)
+        elif event_name == 'JoyBallMotion':
+            func(event.joy, event.ball, event.rel)
+        elif event_name == 'JoyHatMotion':
+            func(event.joy, event.hat, event.value)
+        elif event_name == 'JoyButtonUp':
+            func(event.joy, event.button)
+        elif event_name == 'JoyButtonDown':
+            func(event.joy, event.button)
+        elif event_name == 'VideoResize':
+            func(event.size, event.w, event.h)
+        elif event_name == 'VideoExpose':
+            func()
+        elif event_name.startswith('UserEvent'):
+            func(event.code)
+        else:
+            raise ValueError('unknown event name [%s]' % event_name)
+
+
+def run(wait_tick=50):
+    """waiting event from screen"""
+    __update_key_mouse()
+    # event handle
+    for event in pygame.event.get():
+        if event.type == 12:  # 'Quit'
+            this.__screen_closed = True
+        # invoke callback
+        __call_user_cb(event)
+    return sleep(wait_tick)
+
+
 def update():
     """refresh display"""
     # update background
-    if __BACKDROP.surf:
-        backdrop_heigth = __BACKDROP.surf.get_height()
-        backdrop_width = __BACKDROP.surf.get_width()
-        screen_width, screen_height = __SCREEN_SIZE
+    if this.__backdrop.surf:
+        backdrop_heigth = this.__backdrop.surf.get_height()
+        backdrop_width = this.__backdrop.surf.get_width()
+        screen_width, screen_height = this.__screen_size
         for y in range(0, screen_height, backdrop_heigth):
             for x in range(0, screen_width, backdrop_width):
-                __SCREEN_OBJ.blit(__BACKDROP.surf, (x, y))
+                this.__screen.blit(this.__backdrop.surf, (x, y))
 
     # update sprite
-    for _, obj in __DISPLAY_OBJS.items():
+    for _, obj in this.__display_objs.items():
         if obj and isinstance(obj, SpriteObj) and obj.surf:
-            __SCREEN_OBJ.blit(obj.surf, obj.rect)
+            this.__screen.blit(obj.surf, obj.rect)
 
     # update status bar
-    status_text = "x=%d y=%d key=%s" % (*__MOUSE_POS, '+'.join(__KEY_PRESS))
-    screen_width, screen_height = __SCREEN_SIZE
-    font_height = __SCREEN_FONT.get_linesize()
+    status_text = "x=%d y=%d key=%s" % (
+        *this.mouse_pos, '+'.join(this.key_press))
+    screen_width, screen_height = this.__screen_size
+    font_height = this.__font_obj.get_linesize()
     font_color = (255, 200, 0)  # orange
     font_bgcolor = (0, 0, 0)  # black
     # clean old text
     font_surf = pygame.Surface((screen_width, font_height))
     font_rect = font_surf.fill(font_bgcolor).move(
         0, screen_height - font_height)
-    __SCREEN_OBJ.blit(font_surf, font_rect)
+    this.__screen.blit(font_surf, font_rect)
     # print(status_text)
-    font_surf = __SCREEN_FONT.render(
+    font_surf = this.__font_obj.render(
         status_text, True, font_color, font_bgcolor)
     font_rect = font_surf.get_rect().move(0, screen_height - font_height)
-    __SCREEN_OBJ.blit(font_surf, font_rect)
+    this.__screen.blit(font_surf, font_rect)
 
     # final refresh
     pygame.display.update()
@@ -380,9 +349,9 @@ def show_sprite(obj):
     """
     if not isinstance(obj, SpriteObj):
         raise TypeError('only SpriteObj object can be shown')
-    global __DISPLAY_OBJS
-    if obj.oid not in __DISPLAY_OBJS:
-        __DISPLAY_OBJS[obj.oid] = obj
+    # # global this.__display_objs
+    if obj.oid not in this.__display_objs:
+        this.__display_objs[obj.oid] = obj
 
 
 def hide_sprite(obj):
@@ -391,83 +360,142 @@ def hide_sprite(obj):
     """
     if not isinstance(obj, SpriteObj):
         raise TypeError('only SpriteObj object can be hidden')
-    global __DISPLAY_OBJS
-    if obj.oid in __DISPLAY_OBJS:
-        del __DISPLAY_OBJS[obj.oid]
+    # # global this.__display_objs
+    if obj.oid in this.__display_objs:
+        del this.__display_objs[obj.oid]
+
+
+def set_backdrop(image_file, index=None):
+    """
+    add a image into backdrop list, and set it as current backdrop
+    """
+    index = this.__backdrop.add_costume(image_file, index)
+    this.__backdrop.switch_costume(index)
 
 
 def add_backdrop(image_file, index=None):
     """
     add a image into backdrop list
     """
-    __BACKDROP.add_costume(image_file, index)
-    __BACKDROP.switch_costume(0)
+    this.__backdrop.add_costume(image_file, index)
 
 
 def del_backdrop(index=None):
     """
     remove a image into backdrop list
     """
-    return __BACKDROP.del_costume(index)
+    return this.__backdrop.del_costume(index)
 
 
 def switch_backdrop(index):
     """
     Switch backdrops to change the look of a sprite
     """
-    __BACKDROP.switch_costume(index)
+    this.__backdrop.switch_costume(index)
 
 
 def next_backdrop():
     """
     Switches to the next backdrop in the sprite's backdrop list
     """
-    __BACKDROP.next_costume()
+    this.__backdrop.next_costume()
 
 
 def load_image(image_file, alpha=False):
     """
     load image, save in module dict
     """
-    if image_file not in __SURF_DICT:
+    if image_file not in this.__load_image:
         if image_file.endswith('.png') or alpha:
             surf = pygame.image.load(image_file).convert_alpha()
         else:
             surf = pygame.image.load(image_file).convert()
         if surf:
-            __SURF_DICT[image_file] = surf
+            this.__load_image[image_file] = surf
         else:
             raise ValueError('fail to load image %s' % image_file)
-    return __SURF_DICT[image_file]
+    return this.__load_image[image_file]
 
 
 def get_sprite(name):
-    if name in __SPRITE_OBJS:
-        return __SPRITE_OBJS[name]
+    if name in this.__sprite_objs:
+        return this.__sprite_objs[name]
     else:
         return None
 
 
 def all_sprite():
-    return __SPRITE_OBJS
+    return this.__sprite_objs
 
 
 def create_sprite(name):
-    global __SPRITE_OBJS
-    if name not in __SPRITE_OBJS:
+    if name not in this.__sprite_objs:
         obj = SpriteObj(name)
         show_sprite(obj)
-        __SPRITE_OBJS[name] = obj
+        this.__sprite_objs[name] = obj
     return get_sprite(name)
 
 
 def delete_sprite(obj):
-    global __SPRITE_OBJS
+    """delete sprite object"""
     obj.hide()
-    if obj.name in __SPRITE_OBJS:
-        del __SPRITE_OBJS[obj.name]
+    if obj.name in this.__sprite_objs:
+        del this.__sprite_objs[obj.name]
 
 
-def is_key_pressed(key_name):
+def key_pressed(key_name):
     """return True if key pressed"""
-    return key_name.lower() in __KEY_PRESS
+    return key_name.lower() in this.key_press
+
+
+def set_size(width, height):
+    """set screen width and height"""
+    this.__screen_size = (width, height)
+    this.__screen = pygame.display.set_mode(this.__screen_size, 0, 32)
+
+
+def set_caption(caption):
+    """set window title"""
+    if caption and isinstance(caption, str):
+        pygame.display.set_caption(caption)
+
+
+def __init_event():
+    for i in range(0, pygame.NUMEVENTS):
+        name = pygame.event.event_name(i)
+        if name in ['NoEvent', 'Unknown']:
+            continue
+        if i > 24:
+            name = '%s%d' % (name, i - 24)
+        this.__event_dict[i] = name
+        this.__event_cb[name] = None
+        # print(i, this.__event_dict[i])
+
+
+# init window when module imported
+pygame.init()
+# this is a pointer to the module object instance itself.
+this = sys.modules[__name__]
+# we can explicitly make assignments on it
+this.__status_bar = True
+this.__font_family = 'Console'
+this.__font_size = 16
+this.__font_obj = pygame.font.SysFont(this.__font_family, this.__font_size)
+this.__font_height = this.__font_obj.get_linesize()
+this.__screen_size = (800, 600)
+this.__screen_resizable = True
+this.__screen_closed = False
+this.__screen = pygame.display.set_mode(this.__screen_size, 0, 32)
+this.__clock = pygame.time.Clock()
+this.__event_dict = {}  # event id (int) : event name (string)
+this.__event_cb = {}  # event name (string) : event cb (function)
+this.__display_objs = {}  # obj_id: obj
+this.__sprite_objs = {}
+this.__backdrop = SpriteObj('__backdrop__')
+this.__load_image = {}  # save load image surface
+this.key_press = []  # for performance
+this.mouse_btn = (0, 0, 0)
+this.mouse_pos = (0, 0)
+this.mouse_rel = (0, 0)
+__init_event()
+pygame.display.set_caption(__name__)

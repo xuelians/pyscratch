@@ -9,8 +9,7 @@ def on_mouse_down(pos, button):
 if __name__ == '__main__':
 
     # init
-    screen.init()
-    screen.add_backdrop('./pics/grass.jpg')
+    screen.set_backdrop('./pics/grass.jpg')
     screen.set_event('MouseButtonDown', on_mouse_down)
     # screen.set_event('KEYDOWN', on_key_down)
 
@@ -19,25 +18,26 @@ if __name__ == '__main__':
     tank.move_to(300, 300)
 
     # main-loop
-    running = True
-    while not screen.is_quit():
+    while screen.closed() == False:
         screen.update()
         tick = screen.run(30)
 
         tank = screen.get_sprite('tank')
         if tank:
-            if screen.is_key_pressed('up'):
+            if screen.key_pressed('up'):
                 tank.point_dir(0)
                 tank.move(10)
-            elif screen.is_key_pressed('down'):
+            elif screen.key_pressed('down'):
                 tank.point_dir(180)
                 tank.move(10)
-            elif screen.is_key_pressed('left'):
+            elif screen.key_pressed('left'):
                 tank.change_x(-10)
-            elif screen.is_key_pressed('right'):
+            elif screen.key_pressed('right'):
                 tank.change_x(10)
-            elif screen.is_key_pressed('space'):
+            elif screen.key_pressed('space'):
                 tank.point_mouse()
+                tank.move(10)
+            elif screen.key_pressed('w'):
                 tank.move(10)
     # exit
     print("end")

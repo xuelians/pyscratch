@@ -153,13 +153,14 @@ def create_blocks(row, column):
 
 def main():
 
-    screen.init('Mine', 640, 640, False)
+    screen.set_size(640, 640)
+    screen.set_caption('Mine')
     screen.set_event('MouseButtonDown', on_mouse_down)
     screen.set_event('KeyDown', on_key_down)
 
     create_blocks(10, 10)
 
-    while screen.is_quit() == False:
+    while screen.closed() == False:
         screen.run()
         screen.update()
 

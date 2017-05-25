@@ -160,9 +160,8 @@ def main():
 
     create_blocks(10, 10)
 
-    while screen.closed() == False:
+    while not screen.closed():
         screen.run()
-        screen.update()
 
     # exit
     print("end")

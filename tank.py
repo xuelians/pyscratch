@@ -22,17 +22,19 @@ if __name__ == '__main__':
     while screen.closed() == False:
         tick = screen.run()
         if screen.key_pressed('up'):
-            tank.set_dir(0)
+            tank.set_dir(0, rotate=True)
             tank.move(speed)
         elif screen.key_pressed('down'):
-            tank.set_dir(180)
+            tank.set_dir(180, rotate=True)
             tank.move(speed)
         elif screen.key_pressed('left'):
+            tank.set_dir(270, rotate=True)
             tank.change_x(-speed)
         elif screen.key_pressed('right'):
+            tank.set_dir(90, rotate=True)
             tank.change_x(speed)
         elif screen.key_pressed('space'):
-            tank.point_mouse()
+            tank.point_mouse(rotate=True)
             tank.move(speed)
         elif screen.key_pressed('w'):
             tank.move(speed)

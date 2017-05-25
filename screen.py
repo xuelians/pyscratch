@@ -2,6 +2,7 @@
 
 import pygame
 import sys
+import math
 from pygame.locals import *
 from pygame.math import Vector2 as Vec2d
 
@@ -23,6 +24,9 @@ class SpriteObj():
         self._surf = None
         self._costume = []
         self._costume_used = 0
+        self._rotate_angle = 0
+        self._rotate_angle2 = 0 # rotated angle for performance
+        self._rotate_surf = None
         # for motion
         self.vdir = Vec2d(0, -1)  # point up
         self.vpos = Vec2d(0, 0)  # position
@@ -131,10 +135,18 @@ class SpriteObj():
         if self._hidden:
             return
         if self._surf is not None:
-            rect = self._surf.get_rect()
-            rect.center = (self.vpos[0], self.vpos[1])
-            scr = pygame.display.get_surface()
-            scr.blit(self._surf, rect)
+            if self._rotate_angle:
+                # draw rotate surface
+                self._rotate()
+                rect = self._rotate_surf.get_rect()
+                rect.center = (self.vpos[0], self.vpos[1])
+                scr = pygame.display.get_surface()
+                scr.blit(self._rotate_surf, rect)
+            else:
+                rect = self._surf.get_rect()
+                rect.center = (self.vpos[0], self.vpos[1])
+                scr = pygame.display.get_surface()
+                scr.blit(self._surf, rect)
 
     def show(self):
         """
@@ -149,31 +161,39 @@ class SpriteObj():
         self._hidden = True
 
     # Motions Methods
-    def change_dir(self, angle):
+    def get_dir(self):
+        """return a float angle as current moving direction, 0 is up, 90 is right"""
+        return Vec2d(0, -1).angle_to(self.vdir)
+
+    def change_dir(self, angle, rotate=False):
         """turn a angle on current moving direction,
         positive angle means turn clockwise"""
         self.vdir = self.vdir.rotate(angle)
+        if rotate:
+            self._rotate_angle = self.get_dir()
 
-    def set_dir(self, angle):
+    def set_dir(self, angle, rotate=False):
         """
         Set the angle as current moving direction
         - angle: 0~360, 0 for up, 90 for right, 180 for down, 270 for left
         """
         self.vdir = Vec2d(0, -1).rotate(angle)
+        if rotate:
+            self._rotate_angle = self.get_dir()
 
-    def turn_left(self, angle):
+    def turn_left(self, angle, rotate=False):
         """
         Turn a angle to the left on current moving direction,
         as same as anti-clockwise
         """
-        self.change_dir(-angle)
+        self.change_dir(-angle, rotate=rotate)
 
-    def turn_right(self, angle):
+    def turn_right(self, angle, rotate=False):
         """Turn a right to the right on current moving direction,
         as same as clockwise"""
-        self.change_dir(angle)
+        self.change_dir(angle, rotate=rotate)
 
-    def point_pos(self, xy_or_x, y=None):
+    def point_pos(self, xy_or_x, y=None, rotate=False):
         """Set current moving direction to a postion"""
         if y is not None:
             mdir = Vec2d(xy_or_x, y) - self.vpos
@@ -181,14 +201,16 @@ class SpriteObj():
             mdir = Vec2d(xy_or_x) - self.vpos
         if mdir != (0, 0):
             self.vdir = mdir.normalize()
+        if rotate:
+            self._rotate_angle = self.get_dir()
 
-    def point_mouse(self):
+    def point_mouse(self, rotate=False):
         """Set current moving direction to mouse postion"""
-        self.point_pos(pygame.mouse.get_pos())
+        self.point_pos(pygame.mouse.get_pos(), rotate=rotate)
 
-    def point_obj(self, obj):
+    def point_obj(self, obj, rotate=False):
         """Set current moving direction to a SpriteObj"""
-        self.point_pos(obj.pos)
+        self.point_pos(obj.pos, rotate=rotate)
 
     def move(self, steps):
         """move steps on current moving direction"""
@@ -218,6 +240,21 @@ class SpriteObj():
     def set_y(self, amount):
         """Change the y position by this amount"""
         self.vpos[1] = amount
+
+    def _rotate(self):
+        if self._rotate_angle != self._rotate_angle2:
+            angle = self._rotate_angle * -1
+            org_rect = self._surf.get_rect()
+            rect_scale = 1
+            arc = math.radians(angle)
+            new_w = int((abs(org_rect.width * math.cos(arc)) +
+                        abs(org_rect.height * math.sin(arc))) / rect_scale)
+            new_h = int((abs(org_rect.width * math.sin(arc)) +
+                        abs(org_rect.height * math.cos(arc))) / rect_scale)
+            new_surf = pygame.transform.rotate(self._surf, angle)
+            new_surf = pygame.transform.scale(new_surf, (new_w, new_h))
+            self._rotate_surf = new_surf
+            self._rotate_angle2 = self._rotate_angle
 
     # Looks Methods
     def __add_costume(self, image_surf, index=None):

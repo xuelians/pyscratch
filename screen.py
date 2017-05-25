@@ -8,22 +8,70 @@ from pygame.math import Vector2 as Vec2d
 
 class SpriteObj():
     """Sprite Object"""
-    __counter = 0
+    oid_cnt = 0
+    obj_dict = {}
+    image_cache = {} # save loaded image surface
 
     def __init__(self, name=''):
         # base
-        SpriteObj.__counter += 1
-        self._oid = SpriteObj.__counter
+        SpriteObj.check_name(name)
+        self._oid = SpriteObj.gen_oid()
         self._name = name if name else 'SpriteObj_%d' % self._oid
-        self._screen = sys.modules[__name__]
+        # self._screen = sys.modules[__name__]
         # for display
         self._surf = None
         self._costume = []
         self._costume_used = 0
         # for motion
         self.vdir = Vec2d(0, -1)  # point up
-        self.vpos = Vec2d(0, 0) # position
+        self.vpos = Vec2d(0, 0)  # position
         # init actions
+        SpriteObj.append_obj(self)
+
+    @classmethod
+    def check_name(cls, name):
+        if name in cls.obj_dict:
+            raise RuntimeError(
+                'name [%s] has been used for another SpriteObj' % name)
+
+    @classmethod
+    def gen_oid(cls):
+        cls.oid_cnt += 1
+        return cls.oid_cnt
+
+    @classmethod
+    def append_obj(cls, obj):
+        if obj is None:
+            raise RuntimeError('Expect SpriteObj but None')
+        if obj.name in cls.obj_dict:
+            raise RuntimeError(
+                'name [%s] has been used for another SpriteObj' % obj.name)
+        cls.obj_dict[obj.name] = obj
+
+    @classmethod
+    def delete_obj(cls, name_or_obj):
+        if isinstance(name_or_obj, cls):
+            del cls.obj_dict[name_or_obj.name]
+        else:
+            del cls.obj_dict[name_or_obj]
+
+    @classmethod
+    def update_all(cls):
+        for obj in cls.obj_dict.values():
+            obj._update()
+
+    @classmethod
+    def load_image(cls, image_file, alpha=False):
+        if image_file not in cls.image_cache:
+            if image_file.endswith('.png') or alpha:
+                surf = pygame.image.load(image_file).convert_alpha()
+            else:
+                surf = pygame.image.load(image_file).convert()
+            if surf:
+                cls.image_cache[image_file] = surf
+            else:
+                raise IOError('fail to load image %s' % image_file)
+        return cls.image_cache[image_file]
 
     @property
     def name(self):
@@ -131,7 +179,7 @@ class SpriteObj():
         flist = image_file if isinstance(image_file, list) else [image_file]
         pos_list = []
         for each in flist:
-            surf = self._screen.load_image(each)
+            surf = SpriteObj.load_image(each)
             pos = self.__add_costume(surf, index)
             pos_list.append(pos)
             if index is not None:
@@ -301,9 +349,7 @@ def update():
                 this.__screen.blit(this.__backdrop.surf, (x, y))
 
     # update sprite
-    for _, obj in this.__display_objs.items():
-        if obj and isinstance(obj, SpriteObj):
-            obj._update()
+    SpriteObj.update_all()
 
     # update status bar
     status_text = "x=%d y=%d key=%s" % (
@@ -387,37 +433,29 @@ def next_backdrop():
 
 def load_image(image_file, alpha=False):
     """
-    load image, save in module dict
+    load image file, convert to surface and save in global list as cache
+    - image_file: string, file path
+    - return: image surface object
     """
-    if image_file not in this.__load_image:
-        if image_file.endswith('.png') or alpha:
-            surf = pygame.image.load(image_file).convert_alpha()
-        else:
-            surf = pygame.image.load(image_file).convert()
-        if surf:
-            this.__load_image[image_file] = surf
-        else:
-            raise ValueError('fail to load image %s' % image_file)
-    return this.__load_image[image_file]
+    return SpriteObj.load_image(image_file, alpha)
 
 
 def get_sprite(name):
-    if name in this.__sprite_objs:
-        return this.__sprite_objs[name]
+    """return found SpriteObj, by name. return None for no found"""
+    if name in SpriteObj.obj_dict:
+        return SpriteObj.obj_dict[name]
     else:
         return None
 
 
 def all_sprite():
-    return this.__sprite_objs
+    """return a list saved all SpriteObj"""
+    return SpriteObj.obj_dict
 
 
 def create_sprite(name):
-    if name not in this.__sprite_objs:
-        obj = SpriteObj(name)
-        show_sprite(obj)
-        this.__sprite_objs[name] = obj
-    return get_sprite(name)
+    """create a SpriteObj"""
+    return SpriteObj(name)
 
 
 def delete_sprite(obj):
@@ -476,7 +514,6 @@ this.__event_cb = {}  # event name (string) : event cb (function)
 this.__display_objs = {}  # obj_id: obj
 this.__sprite_objs = {}
 this.__backdrop = SpriteObj('__backdrop__')
-this.__load_image = {}  # save load image surface
 this.key_press = []  # for performance
 this.mouse_btn = (0, 0, 0)
 this.mouse_pos = (0, 0)

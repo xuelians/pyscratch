@@ -14,27 +14,28 @@ if __name__ == '__main__':
     # screen.set_event('KEYDOWN', on_key_down)
 
     tank = screen.create_sprite('tank')
-    tank.set_costume('./pics/1.png')
+    tank.set_costume('./pics/tank12.png')
     tank.move_to(300, 300)
 
     # main-loop
+    speed = 2
     while screen.closed() == False:
         tick = screen.run()
         if screen.key_pressed('up'):
             tank.set_dir(0)
-            tank.move(10)
+            tank.move(speed)
         elif screen.key_pressed('down'):
             tank.set_dir(180)
-            tank.move(10)
+            tank.move(speed)
         elif screen.key_pressed('left'):
-            tank.change_x(-10)
+            tank.change_x(-speed)
         elif screen.key_pressed('right'):
-            tank.change_x(10)
+            tank.change_x(speed)
         elif screen.key_pressed('space'):
             tank.point_mouse()
-            tank.move(10)
+            tank.move(speed)
         elif screen.key_pressed('w'):
-            tank.move(10)
+            tank.move(speed)
         # else:
         #     tank.move_to(screen.mouse_pos)
         mobjs = screen.get_sprite_under_mouse()

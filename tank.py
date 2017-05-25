@@ -20,25 +20,22 @@ if __name__ == '__main__':
     # main-loop
     while screen.closed() == False:
         tick = screen.run()
-        # print(tick)
-        tank = screen.get_sprite('tank')
-        if tank:
-            if screen.key_pressed('up'):
-                tank.set_dir(0)
-                tank.move(10)
-            elif screen.key_pressed('down'):
-                tank.set_dir(180)
-                tank.move(10)
-            elif screen.key_pressed('left'):
-                tank.change_x(-10)
-            elif screen.key_pressed('right'):
-                tank.change_x(10)
-            elif screen.key_pressed('space'):
-                tank.point_mouse()
-                tank.move(10)
-            elif screen.key_pressed('w'):
-                tank.move(10)
-            else:
-                tank.move_to(screen.mouse_pos)
+        if screen.key_pressed('up'):
+            tank.set_dir(0)
+            tank.move(10)
+        elif screen.key_pressed('down'):
+            tank.set_dir(180)
+            tank.move(10)
+        elif screen.key_pressed('left'):
+            tank.change_x(-10)
+        elif screen.key_pressed('right'):
+            tank.change_x(10)
+        elif screen.key_pressed('space'):
+            tank.point_mouse()
+            tank.move(10)
+        elif screen.key_pressed('w'):
+            tank.move(10)
+        else:
+            tank.move_to(screen.mouse_pos)
     # exit
     print("end")

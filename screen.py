@@ -412,26 +412,6 @@ def __update_background():
                 this.__screen.blit(obj.surf, (x, y))
 
 
-def show_sprite(obj):
-    """
-    Makes sprite appear on the Stage
-    """
-    if not isinstance(obj, SpriteObj):
-        raise TypeError('only SpriteObj object can be shown')
-    # # global this.__display_objs
-    if obj.oid not in this.__display_objs:
-        this.__display_objs[obj.oid] = obj
-
-
-def hide_sprite(obj):
-    """
-    Make a hide-and-seek game with characters that appear and disappear.
-    """
-    if not isinstance(obj, SpriteObj):
-        raise TypeError('only SpriteObj object can be hidden')
-    # # global this.__display_objs
-    if obj.oid in this.__display_objs:
-        del this.__display_objs[obj.oid]
 
 
 def get_backdrop():
@@ -505,9 +485,7 @@ def create_sprite(name):
 
 def delete_sprite(obj):
     """delete sprite object"""
-    obj.hide()
-    if obj.name in this.__sprite_objs:
-        del this.__sprite_objs[obj.name]
+    SpriteObj.delete_obj(obj)
 
 
 def key_pressed(key_name):
@@ -556,8 +534,6 @@ this.__screen = pygame.display.set_mode(this.__screen_size, 0, 32)
 this.__clock = pygame.time.Clock()
 this.__event_dict = {}  # event id (int) : event name (string)
 this.__event_cb = {}  # event name (string) : event cb (function)
-this.__display_objs = {}  # obj_id: obj
-this.__sprite_objs = {}
 this.key_press = []  # for performance
 this.mouse_btn = (0, 0, 0)
 this.mouse_pos = (0, 0)

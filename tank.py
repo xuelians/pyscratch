@@ -35,7 +35,10 @@ if __name__ == '__main__':
             tank.move(10)
         elif screen.key_pressed('w'):
             tank.move(10)
-        else:
-            tank.move_to(screen.mouse_pos)
+        # else:
+        #     tank.move_to(screen.mouse_pos)
+        mobjs = screen.get_sprite_under_mouse()
+        if len(mobjs):
+            print(mobjs)
     # exit
     print("end")

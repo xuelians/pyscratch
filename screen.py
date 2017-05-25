@@ -29,19 +29,28 @@ class SpriteObj():
         # init actions
         SpriteObj.append_obj(self)
 
+    def __str__(self):
+        return 'SpriteObj<%s>' % self._name
+
+    def __repr__(self):
+        return 'SpriteObj<%s>' % self._name
+
     @classmethod
     def check_name(cls, name):
+        """raise RuntimeError if name has been used"""
         if name in cls.obj_dict:
             raise RuntimeError(
                 'name [%s] has been used for another SpriteObj' % name)
 
     @classmethod
     def gen_oid(cls):
+        """return a integer as unique object id"""
         cls.oid_cnt += 1
         return cls.oid_cnt
 
     @classmethod
     def append_obj(cls, obj):
+        """append SpriteObj into managed list"""
         if obj is None:
             raise RuntimeError('Expect SpriteObj but None')
         if obj.name in cls.obj_dict:
@@ -51,6 +60,7 @@ class SpriteObj():
 
     @classmethod
     def delete_obj(cls, name_or_obj):
+        """delete SpriteObj from managed list"""
         if isinstance(name_or_obj, cls):
             del cls.obj_dict[name_or_obj.name]
         else:
@@ -58,11 +68,13 @@ class SpriteObj():
 
     @classmethod
     def update_all(cls):
+        """re-draw all managed object on screen"""
         for obj in cls.obj_dict.values():
             obj._update()
 
     @classmethod
     def load_image(cls, image_file, alpha=False):
+        """get image serface from cached list"""
         if image_file not in cls.image_cache:
             if image_file.endswith('.png') or alpha:
                 surf = pygame.image.load(image_file).convert_alpha()
@@ -103,6 +115,16 @@ class SpriteObj():
     def pos_y(self):
         """return y of current position"""
         return self.vpos[1]
+
+    def in_pos(self, xy_or_x, y=None):
+        """return True if sprite object on given position (x,y)"""
+        if self._hidden:
+            return False
+        x = xy_or_x if y is not None else xy_or_x[0]
+        y = y if y is not None else xy_or_x[1]
+        rect = self._surf.get_rect()
+        rect.center = (self.vpos[0], self.vpos[1])
+        return rect.collidepoint(x, y)
 
     def _update(self):
         """update the sprite on screen with new custome and new position"""
@@ -412,8 +434,6 @@ def __update_background():
                 this.__screen.blit(obj.surf, (x, y))
 
 
-
-
 def get_backdrop():
     """get backdrop sprite object"""
     return get_sprite('__backdrop__')
@@ -515,6 +535,21 @@ def __init_event():
         this.__event_dict[i] = name
         this.__event_cb[name] = None
         # print(i, this.__event_dict[i])
+
+
+def get_sprite_in_pos(xy_or_x, y=None):
+    """return a SpriteObj list which is in given position"""
+    objs = []
+    pos = (xy_or_x, y) if y is not None else xy_or_x
+    for obj in SpriteObj.obj_dict.values():
+        if obj.in_pos(pos):
+            objs.append(obj)
+    return objs
+
+
+def get_sprite_under_mouse():
+    """return a SpriteObj list which is under mouse position"""
+    return get_sprite_in_pos(this.mouse_pos)
 
 
 # init window when module imported

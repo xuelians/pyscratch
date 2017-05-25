@@ -18,7 +18,6 @@ class SpriteObj():
         self._screen = sys.modules[__name__]
         # for display
         self._surf = None
-        self._rect = None
         self._costume = []
         self._costume_used = 0
         # for motion
@@ -41,11 +40,13 @@ class SpriteObj():
         """sprite display surface (refer to pygame.surface)"""
         return self._surf
 
-    @property
-    def rect(self):
-        """sprite display position (refer to pygame.rect)"""
-        print(self._rect)
-        return self._rect
+    def _update(self):
+        """update the sprite on screen with new custome and new position"""
+        if self._surf is not None:
+            rect = self._surf.get_rect()
+            rect.center = (self.vpos[0], self.vpos[1])
+            scr = pygame.display.get_surface()
+            scr.blit(self._surf, rect)
 
     def show(self):
         """
@@ -83,44 +84,31 @@ class SpriteObj():
         if mdir != (0, 0):
             self.vdir = mdir.normalize()
 
-    def __move_to_vpos(self):
-        # print(self.vpos[0], self.vpos[1])
-        self._rect.center = (self.vpos[0], self.vpos[1])
-
     def move(self, steps):
         """move steps on current moving direction"""
-        # self.vpos = Vec2d(self._rect.centerx, self._rect.centery)
         self.vpos += self.vdir * steps
-        self.__move_to_vpos()
 
     def move_to(self, center_x, center_y):
         """
         set sprite center to given position (pixel x & y) with sprite left-top
         """
-        # self._rect = self._surf.get_rect()
-        # self._rect.center = (center_x, center_y)
         self.vpos = Vec2d(center_x, center_y)
-        self.__move_to_vpos()
 
     def change_x(self, amount):
         """Change the x position by this amount"""
         self.vpos[0] += amount
-        self.__move_to_vpos()
 
     def change_y(self, amount):
         """Change the y position by this amount"""
         self.vpos[1] += amount
-        self.__move_to_vpos()
 
     def set_x(self, amount):
         """Set the x position of a sprite"""
         self.vpos[0] = amount
-        self.__move_to_vpos()
 
     def set_y(self, amount):
         """Change the y position by this amount"""
         self.vpos[1] = amount
-        self.__move_to_vpos()
 
     # Looks Methods
     def __add_costume(self, image_surf, index=None):
@@ -166,8 +154,6 @@ class SpriteObj():
         """
         try:
             self._surf = self._costume[index]
-            self._rect = self._surf.get_rect()
-            self.__move_to_vpos()
             self._costume_used = index
         except IndexError as err:
             pass
@@ -181,8 +167,6 @@ class SpriteObj():
             self._costume_used = 0  # back to first costume
         try:
             self._surf = self._costume[self._costume_used]
-            self._rect = self._surf.get_rect()
-            self.__move_to_vpos()
         except IndexError as err:
             pass
 
@@ -318,8 +302,8 @@ def update():
 
     # update sprite
     for _, obj in this.__display_objs.items():
-        if obj and isinstance(obj, SpriteObj) and obj.surf:
-            this.__screen.blit(obj.surf, obj.rect)
+        if obj and isinstance(obj, SpriteObj):
+            obj._update()
 
     # update status bar
     status_text = "x=%d y=%d key=%s" % (

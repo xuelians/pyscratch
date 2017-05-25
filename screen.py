@@ -19,6 +19,7 @@ class SpriteObj():
         self._name = name if name else 'SpriteObj_%d' % self._oid
         # self._screen = sys.modules[__name__]
         # for display
+        self._hidden = False
         self._surf = None
         self._costume = []
         self._costume_used = 0
@@ -105,6 +106,8 @@ class SpriteObj():
 
     def _update(self):
         """update the sprite on screen with new custome and new position"""
+        if self._hidden:
+            return
         if self._surf is not None:
             rect = self._surf.get_rect()
             rect.center = (self.vpos[0], self.vpos[1])
@@ -115,13 +118,13 @@ class SpriteObj():
         """
         Makes sprite appear on the Stage
         """
-        self._screen.show_sprite(self)
+        self._hidden = False
 
     def hide(self):
         """
         Make a hide-and-seek game with characters that appear and disappear.
         """
-        self._screen.hide_sprite(self)
+        self._hidden = True
 
     # Motions Methods
     def change_dir(self, angle):
@@ -300,11 +303,6 @@ def draw_image(image_file, pos_x, pos_y):
     return obj
 
 
-def sleep(milliseconds):
-    """entry sleep mode for milliseconds, return integer as actual sleep ticks"""
-    return this.__clock.tick(milliseconds)
-
-
 def __convert_pressed_keys():
     """convert pressed key list to name list"""
     name = []
@@ -361,33 +359,26 @@ def __call_user_cb(event):
             raise ValueError('unknown event name [%s]' % event_name)
 
 
-def run(wait_tick=50):
+def run():
     """waiting event from screen"""
-    __update_key_mouse()
+    # refresh screen
+    __update_background()
+    __update_sprites()
+    __update_status_bar()
+    pygame.display.update()
+    # release cpu
+    msec = this.__clock.tick(40)  # framerate
     # event handle
+    __update_key_mouse()
     for event in pygame.event.get():
         if event.type == 12:  # 'Quit'
             this.__screen_closed = True
         # invoke callback
         __call_user_cb(event)
-    return sleep(wait_tick)
+    return msec
 
 
-def update():
-    """refresh display"""
-    # update background
-    if this.__backdrop.surf:
-        backdrop_heigth = this.__backdrop.surf.get_height()
-        backdrop_width = this.__backdrop.surf.get_width()
-        screen_width, screen_height = this.__screen_size
-        for y in range(0, screen_height, backdrop_heigth):
-            for x in range(0, screen_width, backdrop_width):
-                this.__screen.blit(this.__backdrop.surf, (x, y))
-
-    # update sprite
-    SpriteObj.update_all()
-
-    # update status bar
+def __update_status_bar():
     status_text = "x=%d y=%d key=%s" % (
         *this.mouse_pos, '+'.join(this.key_press))
     screen_width, screen_height = this.__screen_size
@@ -405,8 +396,20 @@ def update():
     font_rect = font_surf.get_rect().move(0, screen_height - font_height)
     this.__screen.blit(font_surf, font_rect)
 
-    # final refresh
-    pygame.display.update()
+
+def __update_sprites():
+    SpriteObj.update_all()
+
+
+def __update_background():
+    obj = get_sprite('__backdrop__')
+    if obj and obj.surf:
+        backdrop_heigth = obj.surf.get_height()
+        backdrop_width = obj.surf.get_width()
+        screen_width, screen_height = this.__screen_size
+        for y in range(0, screen_height, backdrop_heigth):
+            for x in range(0, screen_width, backdrop_width):
+                this.__screen.blit(obj.surf, (x, y))
 
 
 def show_sprite(obj):
@@ -431,40 +434,46 @@ def hide_sprite(obj):
         del this.__display_objs[obj.oid]
 
 
+def get_backdrop():
+    """get backdrop sprite object"""
+    return get_sprite('__backdrop__')
+
+
 def set_backdrop(image_file, index=None):
     """
     add a image into backdrop list, and set it as current backdrop
     """
-    index = this.__backdrop.add_costume(image_file, index)
-    this.__backdrop.switch_costume(index)
+    obj = get_backdrop()
+    index = obj.add_costume(image_file, index)
+    obj.switch_costume(index)
 
 
 def add_backdrop(image_file, index=None):
     """
     add a image into backdrop list
     """
-    this.__backdrop.add_costume(image_file, index)
+    get_backdrop().add_costume(image_file, index)
 
 
 def del_backdrop(index=None):
     """
     remove a image into backdrop list
     """
-    return this.__backdrop.del_costume(index)
+    return get_backdrop().del_costume(index)
 
 
 def switch_backdrop(index):
     """
     Switch backdrops to change the look of a sprite
     """
-    this.__backdrop.switch_costume(index)
+    get_backdrop().switch_costume(index)
 
 
 def next_backdrop():
     """
     Switches to the next backdrop in the sprite's backdrop list
     """
-    this.__backdrop.next_costume()
+    get_backdrop().next_costume()
 
 
 def load_image(image_file, alpha=False):
@@ -476,12 +485,12 @@ def load_image(image_file, alpha=False):
     return SpriteObj.load_image(image_file, alpha)
 
 
-def get_sprite(name):
+def get_sprite(name, defval=None):
     """return found SpriteObj, by name. return None for no found"""
     if name in SpriteObj.obj_dict:
         return SpriteObj.obj_dict[name]
     else:
-        return None
+        return defval
 
 
 def all_sprite():
@@ -549,10 +558,10 @@ this.__event_dict = {}  # event id (int) : event name (string)
 this.__event_cb = {}  # event name (string) : event cb (function)
 this.__display_objs = {}  # obj_id: obj
 this.__sprite_objs = {}
-this.__backdrop = SpriteObj('__backdrop__')
 this.key_press = []  # for performance
 this.mouse_btn = (0, 0, 0)
 this.mouse_pos = (0, 0)
 this.mouse_rel = (0, 0)
 __init_event()
 pygame.display.set_caption(__name__)
+create_sprite('__backdrop__').hide()

@@ -19,9 +19,8 @@ if __name__ == '__main__':
 
     # main-loop
     while screen.closed() == False:
-        screen.update()
-        tick = screen.run(30)
-
+        tick = screen.run()
+        # print(tick)
         tank = screen.get_sprite('tank')
         if tank:
             if screen.key_pressed('up'):
@@ -39,5 +38,7 @@ if __name__ == '__main__':
                 tank.move(10)
             elif screen.key_pressed('w'):
                 tank.move(10)
+            else:
+                tank.move_to(screen.mouse_pos)
     # exit
     print("end")

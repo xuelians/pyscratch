@@ -25,10 +25,10 @@ if __name__ == '__main__':
         tank = screen.get_sprite('tank')
         if tank:
             if screen.key_pressed('up'):
-                tank.point_dir(0)
+                tank.set_dir(0)
                 tank.move(10)
             elif screen.key_pressed('down'):
-                tank.point_dir(180)
+                tank.set_dir(180)
                 tank.move(10)
             elif screen.key_pressed('left'):
                 tank.change_x(-10)

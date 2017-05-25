@@ -10,7 +10,7 @@ class SpriteObj():
     """Sprite Object"""
     oid_cnt = 0
     obj_dict = {}
-    image_cache = {} # save loaded image surface
+    image_cache = {}  # save loaded image surface
 
     def __init__(self, name=''):
         # base
@@ -88,6 +88,21 @@ class SpriteObj():
         """sprite display surface (refer to pygame.surface)"""
         return self._surf
 
+    @property
+    def pos(self):
+        """return (x,y) of current position"""
+        return (self.vpos[0], self.vpos[1])
+
+    @property
+    def pos_x(self):
+        """return x of current position"""
+        return self.vpos[0]
+
+    @property
+    def pos_y(self):
+        """return y of current position"""
+        return self.vpos[1]
+
     def _update(self):
         """update the sprite on screen with new custome and new position"""
         if self._surf is not None:
@@ -109,38 +124,59 @@ class SpriteObj():
         self._screen.hide_sprite(self)
 
     # Motions Methods
-    def turn_left(self, angle):
-        """
-        Turn a angle to the left on current moving direction
-        """
-        self.vdir = self.vdir.rotate(-angle)
-
-    def turn_right(self, angle):
-        """Turn a right to the right on current moving direction"""
+    def change_dir(self, angle):
+        """turn a angle on current moving direction,
+        positive angle means turn clockwise"""
         self.vdir = self.vdir.rotate(angle)
 
-    def point_dir(self, angle):
+    def set_dir(self, angle):
         """
         Set the angle as current moving direction
         - angle: 0~360, 0 for up, 90 for right, 180 for down, 270 for left
         """
         self.vdir = Vec2d(0, -1).rotate(angle)
 
-    def point_mouse(self):
-        """Set current moving direction to mouse postion"""
-        mdir = Vec2d(pygame.mouse.get_pos()) - self.vpos
+    def turn_left(self, angle):
+        """
+        Turn a angle to the left on current moving direction,
+        as same as anti-clockwise
+        """
+        self.change_dir(-angle)
+
+    def turn_right(self, angle):
+        """Turn a right to the right on current moving direction,
+        as same as clockwise"""
+        self.change_dir(angle)
+
+    def point_pos(self, xy_or_x, y=None):
+        """Set current moving direction to a postion"""
+        if y is not None:
+            mdir = Vec2d(xy_or_x, y) - self.vpos
+        else:
+            mdir = Vec2d(xy_or_x) - self.vpos
         if mdir != (0, 0):
             self.vdir = mdir.normalize()
+
+    def point_mouse(self):
+        """Set current moving direction to mouse postion"""
+        self.point_pos(pygame.mouse.get_pos())
+
+    def point_obj(self, obj):
+        """Set current moving direction to a SpriteObj"""
+        self.point_pos(obj.pos)
 
     def move(self, steps):
         """move steps on current moving direction"""
         self.vpos += self.vdir * steps
 
-    def move_to(self, center_x, center_y):
+    def move_to(self, xy_or_x, y=None):
         """
         set sprite center to given position (pixel x & y) with sprite left-top
         """
-        self.vpos = Vec2d(center_x, center_y)
+        if y is not None:
+            self.vpos = Vec2d(xy_or_x, y)
+        else:
+            self.vpos = Vec2d(xy_or_x)
 
     def change_x(self, amount):
         """Change the x position by this amount"""

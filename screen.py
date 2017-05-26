@@ -25,7 +25,7 @@ class SpriteObj():
         self._costume = []
         self._costume_used = 0
         self._rotate_angle = 0
-        self._rotate_angle2 = 0 # rotated angle for performance
+        self._rotate_angle2 = 0  # rotated angle for performance
         self._rotate_surf = None
         # for motion
         self.vdir = Vec2d(0, -1)  # point up
@@ -133,24 +133,27 @@ class SpriteObj():
     def out_of_screen(self):
         """check if sprite is out of screen"""
         scr_rect = pygame.display.get_surface().get_rect()
-        return not scr_rect.collidepoint(self.vpos[0], self.vpos[1])
+        if self._rotate_angle and self._rotate_surf:
+            obj_rect = self._rotate_surf.get_rect(
+                center=(self.vpos[0], self.vpos[1]))
+        else:
+            obj_rect = self._surf.get_rect(center=(self.vpos[0], self.vpos[1]))
+        return not scr_rect.colliderect(obj_rect)
 
     def _update(self):
         """update the sprite on screen with new custome and new position"""
         if self._hidden:
             return
         if self._surf is not None:
+            scr = pygame.display.get_surface()
             if self._rotate_angle:
                 # draw rotate surface
                 self._rotate()
-                rect = self._rotate_surf.get_rect()
-                rect.center = (self.vpos[0], self.vpos[1])
-                scr = pygame.display.get_surface()
+                rect = self._rotate_surf.get_rect(
+                    center=(self.vpos[0], self.vpos[1]))
                 scr.blit(self._rotate_surf, rect)
             else:
-                rect = self._surf.get_rect()
-                rect.center = (self.vpos[0], self.vpos[1])
-                scr = pygame.display.get_surface()
+                rect = self._surf.get_rect(center=(self.vpos[0], self.vpos[1]))
                 scr.blit(self._surf, rect)
 
     def show(self):
@@ -254,9 +257,9 @@ class SpriteObj():
             rect_scale = 1
             arc = math.radians(angle)
             new_w = int((abs(org_rect.width * math.cos(arc)) +
-                        abs(org_rect.height * math.sin(arc))) / rect_scale)
+                         abs(org_rect.height * math.sin(arc))) / rect_scale)
             new_h = int((abs(org_rect.width * math.sin(arc)) +
-                        abs(org_rect.height * math.cos(arc))) / rect_scale)
+                         abs(org_rect.height * math.cos(arc))) / rect_scale)
             new_surf = pygame.transform.rotate(self._surf, -angle)
             new_surf = pygame.transform.scale(new_surf, (new_w, new_h))
             self._rotate_surf = new_surf
@@ -541,9 +544,15 @@ def all_sprite():
     return SpriteObj.obj_dict
 
 
-def create_sprite(name):
+def create_sprite(name, image_file=None, xy_or_x=None, y=None):
     """create a SpriteObj"""
-    return SpriteObj(name)
+    obj = SpriteObj(name)
+    if image_file is not None:
+        obj.set_costume(image_file)
+    if xy_or_x is not None:
+        pos = xy_or_x if y is None else (xy_or_x, y)
+        obj.move_to(pos)
+    return obj
 
 
 def delete_sprite(obj):

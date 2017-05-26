@@ -3,6 +3,7 @@
 import pygame
 import sys
 import math
+import random
 from pygame.locals import *
 from pygame.math import Vector2 as Vec2d
 
@@ -84,7 +85,7 @@ class SpriteObj():
         while cls.obj_dead:
             name = cls.obj_dead.pop()
             if name in cls.obj_dict:
-                print('del %s' % name)
+                # print('del %s' % name)
                 del cls.obj_dict[name]
         for obj in cls.obj_dict.values():
             obj._update()
@@ -153,6 +154,18 @@ class SpriteObj():
             obj_rect = self._surf.get_rect(center=(self.vpos[0], self.vpos[1]))
         return not scr_rect.colliderect(obj_rect)
 
+    def collide_objs(self, objs):
+        cobjs = []
+        if objs:
+            for obj in objs:
+                self_rect = self._surf.get_rect(
+                    center=(self.vpos[0], self.vpos[1]))
+                obj_rect = obj._surf.get_rect(
+                    center=(obj.vpos[0], obj.vpos[1]))
+                if self_rect.colliderect(obj_rect):
+                    cobjs.append(obj)
+        return cobjs
+
     def _update(self):
         """update the sprite on screen with new custome and new position"""
         if self._hidden:
@@ -160,14 +173,12 @@ class SpriteObj():
         if self._surf is not None:
             scr = pygame.display.get_surface()
             if self._rotate_angle:
-                # draw rotate surface
                 self._rotate()
-                rect = self._rotate_surf.get_rect(
-                    center=(self.vpos[0], self.vpos[1]))
-                scr.blit(self._rotate_surf, rect)
             else:
-                rect = self._surf.get_rect(center=(self.vpos[0], self.vpos[1]))
-                scr.blit(self._surf, rect)
+                self._rotate_surf = self._surf
+            rect = self._rotate_surf.get_rect(
+                center=(self.vpos[0], self.vpos[1]))
+            scr.blit(self._rotate_surf, rect)
             # auto-move
             if self._am_enabled:
                 self.move(self._am_speed)
@@ -633,6 +644,14 @@ def now_time():
     return pygame.time.get_ticks()
 
 
+def get_sprite_by_name(prefix):
+    objs = []
+    for name, obj in SpriteObj.obj_dict.items():
+        if name.startswith(prefix):
+            objs.append(obj)
+    return objs
+
+
 def get_sprite_in_pos(xy_or_x, y=None):
     """return a SpriteObj list which is in given position"""
     objs = []
@@ -646,6 +665,16 @@ def get_sprite_in_pos(xy_or_x, y=None):
 def get_sprite_under_mouse():
     """return a SpriteObj list which is under mouse position"""
     return get_sprite_in_pos(this.mouse_pos)
+
+
+def random_num(min, max):
+    return random.random() * (max - min) + min
+
+
+def random_pos():
+    x = random_num(0, __screen_size[0])
+    y = random_num(0, __screen_size[1])
+    return (x, y)
 
 
 # init window when module imported

@@ -37,16 +37,19 @@ class TankObj():
         self.foot.turn_right(2, True)
         self.body.turn_right(2, True)
 
-    def fire(self, btn):
-        if btn:
+    def fire(self, btn_press):
+        if btn_press:
             if not self._fire_colddown or screen.now_time() - self._fire_colddown > 200:
                 mdir = self.head.get_dir()
-                obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                obj = screen.create_sprite(
+                    'bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
                 obj.set_auto_move(5, mdir)
-                obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
-                obj.set_auto_move(5, mdir-5)
-                obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
-                obj.set_auto_move(5, mdir+5)
+                obj = screen.create_sprite(
+                    'bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                obj.set_auto_move(5, mdir - 5)
+                obj = screen.create_sprite(
+                    'bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                obj.set_auto_move(5, mdir + 5)
                 self._fire_colddown = screen.now_time()
         else:
             self._fire_colddown = 0
@@ -63,14 +66,41 @@ class TankObj():
         self._aim()
         self.fire(screen.mouse_btn[0])
 
+
+class TargetObj():
+    def __init__(self):
+        self._create()
+
+    def _create(self):
+        self.body = screen.create_sprite('target_XXXXXX', './pics/1.png', screen.random_pos())
+        self.hp = 20
+
+    def update(self):
+        if self.hp > 0:
+            bullets = screen.get_sprite_by_name('bullet_')
+            collide_bullets = self.body.collide_objs(bullets)
+            if collide_bullets:
+                print(collide_bullets, end=',')
+                for obj in collide_bullets:
+                    screen.delete_sprite(obj)
+                    self.hp -= 1
+                print(self.hp)
+                if self.hp <= 0:
+                    screen.delete_sprite(self.body)
+                    self._create()
+
+
 if __name__ == '__main__':
 
     # init
     screen.set_backdrop('./pics/grass.jpg')
     tank = TankObj()
+    target = TargetObj()
 
     while screen.closed() == False:
         tick = screen.run()
         tank.update()
+        target.update()
+
     # exit
     print("end")

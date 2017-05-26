@@ -130,6 +130,11 @@ class SpriteObj():
         rect.center = (self.vpos[0], self.vpos[1])
         return rect.collidepoint(x, y)
 
+    def out_of_screen(self):
+        """check if sprite is out of screen"""
+        scr_rect = pygame.display.get_surface().get_rect()
+        return not scr_rect.collidepoint(self.vpos[0], self.vpos[1])
+
     def _update(self):
         """update the sprite on screen with new custome and new position"""
         if self._hidden:
@@ -170,7 +175,7 @@ class SpriteObj():
         positive angle means turn clockwise"""
         self.vdir = self.vdir.rotate(angle)
         if rotate:
-            self._rotate_angle = self.get_dir()
+            self._rotate_angle = int(self.get_dir())
 
     def set_dir(self, angle, rotate=False):
         """
@@ -179,7 +184,7 @@ class SpriteObj():
         """
         self.vdir = Vec2d(0, -1).rotate(angle)
         if rotate:
-            self._rotate_angle = self.get_dir()
+            self._rotate_angle = int(self.get_dir())
 
     def turn_left(self, angle, rotate=False):
         """
@@ -202,7 +207,7 @@ class SpriteObj():
         if mdir != (0, 0):
             self.vdir = mdir.normalize()
         if rotate:
-            self._rotate_angle = self.get_dir()
+            self._rotate_angle = int(self.get_dir())
 
     def point_mouse(self, rotate=False):
         """Set current moving direction to mouse postion"""
@@ -243,7 +248,8 @@ class SpriteObj():
 
     def _rotate(self):
         if self._rotate_angle != self._rotate_angle2:
-            angle = self._rotate_angle * -1
+            angle = self._rotate_angle
+            # print(angle)
             org_rect = self._surf.get_rect()
             rect_scale = 1
             arc = math.radians(angle)
@@ -251,7 +257,7 @@ class SpriteObj():
                         abs(org_rect.height * math.sin(arc))) / rect_scale)
             new_h = int((abs(org_rect.width * math.sin(arc)) +
                         abs(org_rect.height * math.cos(arc))) / rect_scale)
-            new_surf = pygame.transform.rotate(self._surf, angle)
+            new_surf = pygame.transform.rotate(self._surf, -angle)
             new_surf = pygame.transform.scale(new_surf, (new_w, new_h))
             self._rotate_surf = new_surf
             self._rotate_angle2 = self._rotate_angle

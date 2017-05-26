@@ -11,13 +11,18 @@ class SpriteObj():
     """Sprite Object"""
     oid_cnt = 0
     obj_dict = {}
+    obj_dead = []  # put name here to delete a sprite obj
     image_cache = {}  # save loaded image surface
 
     def __init__(self, name=''):
         # base
-        SpriteObj.check_name(name)
-        self._oid = SpriteObj.gen_oid()
-        self._name = name if name else 'SpriteObj_%d' % self._oid
+        if name.endswith('XXXXXX'):
+            self._oid = SpriteObj.gen_oid()
+            self._name = name.replace('XXXXXX', str(self._oid))
+        else:
+            SpriteObj.check_name(name)
+            self._oid = SpriteObj.gen_oid()
+            self._name = name if name else 'SpriteObj_%d' % self._oid
         # self._screen = sys.modules[__name__]
         # for display
         self._hidden = False
@@ -30,6 +35,9 @@ class SpriteObj():
         # for motion
         self.vdir = Vec2d(0, -1)  # point up
         self.vpos = Vec2d(0, 0)  # position
+        # for auto-move
+        self._am_enabled = False
+        self._am_speed = 1
         # init actions
         SpriteObj.append_obj(self)
 
@@ -66,13 +74,18 @@ class SpriteObj():
     def delete_obj(cls, name_or_obj):
         """delete SpriteObj from managed list"""
         if isinstance(name_or_obj, cls):
-            del cls.obj_dict[name_or_obj.name]
+            cls.obj_dead.append(name_or_obj.name)
         else:
-            del cls.obj_dict[name_or_obj]
+            cls.obj_dead.append(name_or_obj)
 
     @classmethod
     def update_all(cls):
         """re-draw all managed object on screen"""
+        while cls.obj_dead:
+            name = cls.obj_dead.pop()
+            if name in cls.obj_dict:
+                print('del %s' % name)
+                del cls.obj_dict[name]
         for obj in cls.obj_dict.values():
             obj._update()
 
@@ -155,6 +168,11 @@ class SpriteObj():
             else:
                 rect = self._surf.get_rect(center=(self.vpos[0], self.vpos[1]))
                 scr.blit(self._surf, rect)
+            # auto-move
+            if self._am_enabled:
+                self.move(self._am_speed)
+                if self.out_of_screen():
+                    self.delete_obj(self)
 
     def show(self):
         """
@@ -232,6 +250,14 @@ class SpriteObj():
             self.vpos = Vec2d(xy_or_x, y)
         else:
             self.vpos = Vec2d(xy_or_x)
+
+    def set_auto_move(self, speed, target_pos, target_dir=None):
+        self._am_enabled = True
+        self._am_speed = speed
+        if target_dir is None:
+            self.point_pos(target_pos, rotate=True)
+        else:
+            self.set_dir(target_dir, True)
 
     def change_x(self, amount):
         """Change the x position by this amount"""
@@ -427,6 +453,21 @@ def __call_user_cb(event):
             raise ValueError('unknown event name [%s]' % event_name)
 
 
+def __run_fps(framerate=100):
+    msec = this.__clock.tick(framerate)
+    __run_fps.frame_sum += 1
+    if now_time() - __run_fps.last_time > 1000:
+        this.fps = int(__run_fps.frame_sum /
+                       (now_time() - __run_fps.last_time) * 1000)
+        __run_fps.frame_sum = 0
+        __run_fps.last_time = now_time()
+    return msec
+
+
+__run_fps.frame_sum = 0
+__run_fps.last_time = 0
+
+
 def run():
     """waiting event from screen"""
     # refresh screen
@@ -435,7 +476,7 @@ def run():
     __update_status_bar()
     pygame.display.update()
     # release cpu
-    msec = this.__clock.tick(40)  # framerate
+    msec = __run_fps(100)
     # event handle
     __update_key_mouse()
     for event in pygame.event.get():
@@ -447,8 +488,9 @@ def run():
 
 
 def __update_status_bar():
-    status_text = "x=%d y=%d key=%s" % (
-        *this.mouse_pos, '+'.join(this.key_press))
+    status_text = "fps=%d x=%d y=%d key=%s" % (this.fps,
+                                               *this.mouse_pos,
+                                               '+'.join(this.key_press))
     screen_width, screen_height = this.__screen_size
     font_height = this.__font_obj.get_linesize()
     font_color = (255, 200, 0)  # orange
@@ -589,6 +631,11 @@ def __init_event():
         # print(i, this.__event_dict[i])
 
 
+def now_time():
+    """time in milliseconds"""
+    return pygame.time.get_ticks()
+
+
 def get_sprite_in_pos(xy_or_x, y=None):
     """return a SpriteObj list which is in given position"""
     objs = []
@@ -625,6 +672,7 @@ this.key_press = []  # for performance
 this.mouse_btn = (0, 0, 0)
 this.mouse_pos = (0, 0)
 this.mouse_rel = (0, 0)
+this.fps = 0
 __init_event()
 pygame.display.set_caption(__name__)
 create_sprite('__backdrop__').hide()

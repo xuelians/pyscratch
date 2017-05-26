@@ -12,7 +12,8 @@ class TankObj():
             'tank_body', './pics/tank_body.png', self.foot.pos)
         self.head = screen.create_sprite(
             'tank_head', './pics/tank_head.png', self.foot.pos)
-        self.speed = 2
+        self.speed = 1
+        self._fire_colddown = False
         pass
 
     def _aim(self):
@@ -36,6 +37,15 @@ class TankObj():
         self.foot.turn_right(2, True)
         self.body.turn_right(2, True)
 
+    def fire(self, btn):
+        if btn:
+            if not self._fire_colddown:
+                obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                obj.set_auto_move(5, screen.mouse_pos)
+                self._fire_colddown = True
+        else:
+            self._fire_colddown = False
+
     def update(self):
         if screen.key_pressed('up'):
             self.go_ahead()
@@ -46,7 +56,7 @@ class TankObj():
         if screen.key_pressed('right'):
             self.turn_right()
         self._aim()
-
+        self.fire(screen.mouse_btn[0])
 
 if __name__ == '__main__':
 

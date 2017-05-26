@@ -2,45 +2,60 @@
 
 import screen
 
-def on_mouse_down(pos, button):
-    pass
+
+class TankObj():
+
+    def __init__(self):
+        self.foot = screen.create_sprite(
+            'tank_foot', './pics/tank_foot.png', (300, 300))
+        self.body = screen.create_sprite(
+            'tank_body', './pics/tank_body.png', self.foot.pos)
+        self.head = screen.create_sprite(
+            'tank_head', './pics/tank_head.png', self.foot.pos)
+        self.speed = 2
+        pass
+
+    def _aim(self):
+        self.head.point_mouse(True)
+
+    def go_ahead(self):
+        self.foot.move(self.speed)
+        self.head.move_to(self.foot.pos)
+        self.body.move_to(self.foot.pos)
+
+    def go_back(self):
+        self.foot.move(-self.speed)
+        self.head.move_to(self.foot.pos)
+        self.body.move_to(self.foot.pos)
+
+    def turn_left(self):
+        self.foot.turn_left(2, True)
+        self.body.turn_left(2, True)
+
+    def turn_right(self):
+        self.foot.turn_right(2, True)
+        self.body.turn_right(2, True)
+
+    def update(self):
+        if screen.key_pressed('up'):
+            self.go_ahead()
+        if screen.key_pressed('down'):
+            self.go_back()
+        if screen.key_pressed('left'):
+            self.turn_left()
+        if screen.key_pressed('right'):
+            self.turn_right()
+        self._aim()
 
 
 if __name__ == '__main__':
 
     # init
     screen.set_backdrop('./pics/grass.jpg')
-    screen.set_event('MouseButtonDown', on_mouse_down)
-    # screen.set_event('KEYDOWN', on_key_down)
+    tank = TankObj()
 
-    tank = screen.create_sprite('tank')
-    tank.set_costume('./pics/tank12.png')
-    tank.move_to(300, 300)
-
-    # main-loop
-    speed = 2
     while screen.closed() == False:
         tick = screen.run()
-        if screen.key_pressed('up'):
-            tank.move(speed)
-        if screen.key_pressed('down'):
-            tank.move(-speed)
-        if screen.key_pressed('left'):
-            tank.turn_left(2, rotate=True)
-        if screen.key_pressed('right'):
-            tank.turn_right(2, rotate=True)
-        if screen.key_pressed('space'):
-            tank.point_mouse(rotate=True)
-            tank.move(speed)
-        elif screen.key_pressed('w'):
-            tank.move(speed)
-        # else:
-        #     tank.move_to(screen.mouse_pos)
-        mobjs = screen.get_sprite_under_mouse()
-        if len(mobjs):
-            print(mobjs)
-        
-        if tank.out_of_screen():
-            print('out of screen, %s' % str(tank.pos))
+        tank.update()
     # exit
     print("end")

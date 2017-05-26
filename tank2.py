@@ -39,12 +39,17 @@ class TankObj():
 
     def fire(self, btn):
         if btn:
-            if not self._fire_colddown:
+            if not self._fire_colddown or screen.now_time() - self._fire_colddown > 200:
+                mdir = self.head.get_dir()
                 obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
-                obj.set_auto_move(5, screen.mouse_pos)
-                self._fire_colddown = True
+                obj.set_auto_move(5, mdir)
+                obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                obj.set_auto_move(5, mdir-5)
+                obj = screen.create_sprite('bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                obj.set_auto_move(5, mdir+5)
+                self._fire_colddown = screen.now_time()
         else:
-            self._fire_colddown = False
+            self._fire_colddown = 0
 
     def update(self):
         if screen.key_pressed('up'):

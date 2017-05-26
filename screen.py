@@ -251,13 +251,10 @@ class SpriteObj():
         else:
             self.vpos = Vec2d(xy_or_x)
 
-    def set_auto_move(self, speed, target_pos, target_dir=None):
+    def set_auto_move(self, speed, dir):
         self._am_enabled = True
         self._am_speed = speed
-        if target_dir is None:
-            self.point_pos(target_pos, rotate=True)
-        else:
-            self.set_dir(target_dir, True)
+        self.set_dir(dir, True)
 
     def change_x(self, amount):
         """Change the x position by this amount"""

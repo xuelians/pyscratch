@@ -9,6 +9,7 @@ from pygame.math import Vector2 as Vec2d
 
 VER = (0, 1)
 
+
 class SpriteObj():
     """Sprite Object"""
     oid_cnt = 0
@@ -16,7 +17,7 @@ class SpriteObj():
     obj_dead = []  # put name here to delete a sprite obj
     image_cache = {}  # save loaded image surface
 
-    def __init__(self, name=''):
+    def __init__(self, name='', owner=None):
         # base
         if name.endswith('XXXXXX'):
             self._oid = SpriteObj.gen_oid()
@@ -25,7 +26,7 @@ class SpriteObj():
             SpriteObj.check_name(name)
             self._oid = SpriteObj.gen_oid()
             self._name = name if name else 'SpriteObj_%d' % self._oid
-        # self._screen = sys.modules[__name__]
+        self._owner = self if owner is None else owner
         # for display
         self._hidden = False
         self._surf = None
@@ -114,6 +115,11 @@ class SpriteObj():
     def oid(self):
         """return sprite object id (int)"""
         return self._oid
+
+    @property
+    def owner(self):
+        """return the owner of sprite"""
+        return self._owner
 
     @property
     def surf(self):
@@ -391,11 +397,6 @@ def set_event(name_or_id, func=None):
     this.__event_cb[name] = func
 
 
-def closed():
-    """return True if screen closed (right-top close button clicked)"""
-    return this.__screen_closed
-
-
 def draw_image(image_file, pos_x, pos_y):
     """
     load a image file and set position (left-top)
@@ -418,7 +419,7 @@ def __convert_pressed_keys():
 
 def __update_key_mouse():
     """save key and mouse to global"""
-    this.key_press = __convert_pressed_keys()
+    this.keys = __convert_pressed_keys()
     this.mouse_pos = pygame.mouse.get_pos()
     this.mouse_rel = pygame.mouse.get_rel()
     this.mouse_btn = pygame.mouse.get_pressed()
@@ -490,7 +491,7 @@ def run():
     __update_key_mouse()
     for event in pygame.event.get():
         if event.type == 12:  # 'Quit'
-            this.__screen_closed = True
+            this.closed = True
         # invoke callback
         __call_user_cb(event)
     return msec
@@ -499,8 +500,8 @@ def run():
 def __update_status_bar():
     status_text = "fps=%d x=%d y=%d key=%s" % (this.fps,
                                                *this.mouse_pos,
-                                               '+'.join(this.key_press))
-    screen_width, screen_height = this.__screen_size
+                                               '+'.join(this.keys))
+    screen_width, screen_height = this.size
     font_height = this.__font_obj.get_linesize()
     font_color = (255, 200, 0)  # orange
     font_bgcolor = (0, 0, 0)  # black
@@ -525,7 +526,7 @@ def __update_background():
     if obj and obj.surf:
         backdrop_heigth = obj.surf.get_height()
         backdrop_width = obj.surf.get_width()
-        screen_width, screen_height = this.__screen_size
+        screen_width, screen_height = this.size
         for y in range(0, screen_height, backdrop_heigth):
             for x in range(0, screen_width, backdrop_width):
                 this.__screen.blit(obj.surf, (x, y))
@@ -590,17 +591,29 @@ def get_sprite(name, defval=None):
         return defval
 
 
+def get_sprite_owner(name, defval=None):
+    """return the owner of SpriteObj (found by name).
+       return None for no found,
+       return SpriteObj self if SpriteObj not has owner"""
+    if name in SpriteObj.obj_dict:
+        return SpriteObj.obj_dict[name].owner
+    else:
+        return defval
+
+
 def all_sprite():
     """return a list saved all SpriteObj"""
     return SpriteObj.obj_dict
 
 
-def create_sprite(name, image_file=None, xy_or_x=None, y=None):
+def create_sprite(name, owner=None, images=None, xy_or_x=None, y=None):
     """create a SpriteObj with a name
-    - if name end with 'XXXXXX', use object id to replace the end 'XXXXXX' """
-    obj = SpriteObj(name)
-    if image_file is not None:
-        obj.set_costume(image_file)
+    - name: string: if name end with 'XXXXXX', use object id to replace the end 'XXXXXX'
+    - owner: obj: set owner for sprite, used for get owner if has sprite
+    - images: string/list: init the costume from image file path / file list"""
+    obj = SpriteObj(name, owner)
+    if images is not None:
+        obj.set_costume(images)
     if xy_or_x is not None:
         pos = xy_or_x if y is None else (xy_or_x, y)
         obj.move_to(pos)
@@ -612,15 +625,15 @@ def delete_sprite(obj):
     SpriteObj.delete_obj(obj)
 
 
-def key_pressed(key_name):
+def keysed(key_name):
     """return True if key pressed"""
-    return key_name.lower() in this.key_press
+    return key_name.lower() in this.keys
 
 
 def set_size(width, height):
     """set screen width and height"""
-    this.__screen_size = (width, height)
-    this.__screen = pygame.display.set_mode(this.__screen_size, 0, 32)
+    this.size = (width, height)
+    this.__screen = pygame.display.set_mode(this.size, 0, 32)
 
 
 def set_caption(caption):
@@ -674,8 +687,8 @@ def random_num(min, max):
 
 
 def random_pos():
-    x = random_num(0, __screen_size[0])
-    y = random_num(0, __screen_size[1])
+    x = random_num(0, this.size[0])
+    y = random_num(0, this.size[1])
     return (x, y)
 
 
@@ -689,14 +702,14 @@ this.__font_family = 'Console'
 this.__font_size = 16
 this.__font_obj = pygame.font.SysFont(this.__font_family, this.__font_size)
 this.__font_height = this.__font_obj.get_linesize()
-this.__screen_size = (800, 600)
+this.size = (800, 600)
 this.__screen_resizable = True
-this.__screen_closed = False
-this.__screen = pygame.display.set_mode(this.__screen_size, 0, 32)
+this.closed = False
+this.__screen = pygame.display.set_mode(this.size, 0, 32)
 this.__clock = pygame.time.Clock()
 this.__event_dict = {}  # event id (int) : event name (string)
 this.__event_cb = {}  # event name (string) : event cb (function)
-this.key_press = []  # for performance
+this.keys = []  # for performance
 this.mouse_btn = (0, 0, 0)
 this.mouse_pos = (0, 0)
 this.mouse_rel = (0, 0)

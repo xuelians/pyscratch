@@ -15,17 +15,16 @@ class BlockObj():
             './pics/unknown.png',  # 11
             './pics/mine.png'  # 12
         ]
-        self.body = screen.create_sprite(name, images, posx, posy)
+        self.body = screen.create_sprite(name, self, images, posx, posy)
         self.body.switch_costume(11)
-        self.body.mine = False
-        pass
+        self.mine = False
 
     # class method function
     def open(self):
-        # if self.mine == True:
-        #     self.set_image('mine.png')
-        # else:
-        #     self.set_image('safe.png')
+        if self.mine == True:
+            self.body.switch_costume(9)
+        else:
+            self.body.switch_costume(0)
         pass
 
 
@@ -33,7 +32,7 @@ def put_mines(row, column, num):
     while num > 0:
         x = screen.random_num(0, column)
         y = screen.random_num(0, row)
-        b = screen.get_sprite('block_%d_%d' % (x, y))
+        b = screen.get_sprite_owner('block_%d_%d' % (x, y))
         if b and b.mine != True:
             b.mine = True
             num -= 1
@@ -54,7 +53,7 @@ def on_mouse_down():
     if screen.mouse_btn[0]:
         x = screen.mouse_pos[0] // 64
         y = screen.mouse_pos[1] // 64
-        b = screen.get_sprite('block_%d_%d' % (x, y))
+        b = screen.get_sprite_owner('block_%d_%d' % (x, y))
         if b is not None:
             b.open()
 
@@ -63,7 +62,7 @@ def main():
     screen.set_size(640, 640)
     create_blocks(10, 10)
 
-    while not screen.closed():
+    while not screen.closed:
         screen.run()
         on_mouse_down()
 

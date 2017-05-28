@@ -7,6 +7,7 @@ import random
 from pygame.locals import *
 from pygame.math import Vector2 as Vec2d
 
+VER = (0, 1)
 
 class SpriteObj():
     """Sprite Object"""

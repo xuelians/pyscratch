@@ -17,7 +17,7 @@ class SpriteObj():
     obj_dead = []  # put name here to delete a sprite obj
     image_cache = {}  # save loaded image surface
 
-    def __init__(self, name='', owner=None):
+    def __init__(self, name=''):
         # base
         if name.endswith('XXXXXX'):
             self._oid = SpriteObj.gen_oid()
@@ -26,7 +26,7 @@ class SpriteObj():
             SpriteObj.check_name(name)
             self._oid = SpriteObj.gen_oid()
             self._name = name if name else 'SpriteObj_%d' % self._oid
-        self._owner = self if owner is None else owner
+        self._owner = self
         # for display
         self._hidden = False
         self._surf = None
@@ -140,6 +140,10 @@ class SpriteObj():
     def pos_y(self):
         """return y of current position"""
         return self.vpos[1]
+
+    def set_owner(self, value):
+        """set the owner of sprite object, used for get_sprite_owner() later"""
+        self._owner = value
 
     def in_pos(self, xy_or_x, y=None):
         """return True if sprite object on given position (x,y)"""
@@ -611,7 +615,9 @@ def create_sprite(name, owner=None, images=None, xy_or_x=None, y=None):
     - name: string: if name end with 'XXXXXX', use object id to replace the end 'XXXXXX'
     - owner: obj: set owner for sprite, used for get owner if has sprite
     - images: string/list: init the costume from image file path / file list"""
-    obj = SpriteObj(name, owner)
+    obj = SpriteObj(name)
+    if owner is not None:
+        obj.set_owner(owner)
     if images is not None:
         obj.set_costume(images)
     if xy_or_x is not None:

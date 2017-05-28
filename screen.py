@@ -596,7 +596,8 @@ def all_sprite():
 
 
 def create_sprite(name, image_file=None, xy_or_x=None, y=None):
-    """create a SpriteObj"""
+    """create a SpriteObj with a name
+    - if name end with 'XXXXXX', use object id to replace the end 'XXXXXX' """
     obj = SpriteObj(name)
     if image_file is not None:
         obj.set_costume(image_file)

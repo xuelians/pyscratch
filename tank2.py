@@ -7,11 +7,11 @@ class TankObj():
 
     def __init__(self):
         self.foot = screen.create_sprite(
-            'tank_foot', './pics/tank_foot.png', (300, 300))
+            'tank_foot', self, './pics/tank_foot.png', (300, 300))
         self.body = screen.create_sprite(
-            'tank_body', './pics/tank_body.png', self.foot.pos)
+            'tank_body', self, './pics/tank_body.png', self.foot.pos)
         self.head = screen.create_sprite(
-            'tank_head', './pics/tank_head.png', self.foot.pos)
+            'tank_head', self, './pics/tank_head.png', self.foot.pos)
         self.speed = 1
         self._fire_colddown = False
         pass
@@ -42,13 +42,13 @@ class TankObj():
             if not self._fire_colddown or screen.now_time() - self._fire_colddown > 200:
                 mdir = self.head.get_dir()
                 obj = screen.create_sprite(
-                    'bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                    'bullet_XXXXXX', self, './pics/bullet1.png', self.foot.pos)
                 obj.set_auto_move(5, mdir)
                 obj = screen.create_sprite(
-                    'bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                    'bullet_XXXXXX', self, './pics/bullet1.png', self.foot.pos)
                 obj.set_auto_move(5, mdir - 5)
                 obj = screen.create_sprite(
-                    'bullet_XXXXXX', './pics/bullet.png', self.foot.pos)
+                    'bullet_XXXXXX', self, './pics/bullet1.png', self.foot.pos)
                 obj.set_auto_move(5, mdir + 5)
                 self._fire_colddown = screen.now_time()
         else:
@@ -72,8 +72,13 @@ class TargetObj():
         self._create()
 
     def _create(self):
-        self.body = screen.create_sprite('target_XXXXXX', './pics/1.png', screen.random_pos())
+        self.body = screen.create_sprite('target_XXXXXX', self, './pics/1.png', screen.random_pos())
+        # self.bar = screen.draw_box(64, 12, 'red', (0, 0, 0), 0)
+        # self.bar.move_to(self.body.pos_x, self.body.pos_y+38)
         self.hp = 20
+        self.bar2 = screen.SpriteBar(value=20, max=20, width=64)
+        self.bar2.move_to(self.body.pos_x, self.body.pos_y+38)
+        self.bar2.value = self.hp
 
     def update(self):
         if self.hp > 0:
@@ -85,8 +90,10 @@ class TargetObj():
                     screen.delete_sprite(obj)
                     self.hp -= 1
                 print(self.hp)
+                self.bar2.value = self.hp
                 if self.hp <= 0:
                     screen.delete_sprite(self.body)
+                    screen.delete_sprite(self.bar2)
                     self._create()
 
 
@@ -97,7 +104,7 @@ if __name__ == '__main__':
     tank = TankObj()
     target = TargetObj()
 
-    while screen.closed() == False:
+    while not screen.closed:
         tick = screen.run()
         tank.update()
         target.update()

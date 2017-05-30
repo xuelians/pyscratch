@@ -17,7 +17,7 @@ from pygame.math import Vector2 as Vec2d
 VER = (0, 1)
 
 
-class SpriteObj():
+class SpriteObj(object):
     """Sprite Object
 
     Attributes:
@@ -41,10 +41,10 @@ class SpriteObj():
         - get_sprite_under_mouse(): Get the SpriteObj which is under mouse position
         - get_sprite_by_name(prefix):
     """
-    __oid_cnt = 0
-    __obj_dict = {}
-    __obj_dead = []  # put name here to delete a sprite obj
-    __image_cache = {}  # save loaded image surface
+    _oid_cnt = 0
+    _obj_dict = {}
+    _obj_dead = []  # put name here to delete a sprite obj
+    _image_cache = {}  # save loaded image surface
 
     def __init__(self, name=''):
         """Summary
@@ -52,6 +52,7 @@ class SpriteObj():
         Args:
             name (str, optional): Description
         """
+        super().__init__()
         # base
         if name.endswith('XXXXXX'):
             self._oid = SpriteObj.__gen_oid()
@@ -104,7 +105,7 @@ class SpriteObj():
         Raises:
             RuntimeError: Description
         """
-        if name in cls.__obj_dict:
+        if name in cls._obj_dict:
             raise RuntimeError(
                 'name [%s] has been used for another SpriteObj' % name)
 
@@ -115,8 +116,8 @@ class SpriteObj():
         Returns:
             TYPE: Description
         """
-        cls.__oid_cnt += 1
-        return cls.__oid_cnt
+        cls._oid_cnt += 1
+        return cls._oid_cnt
 
     @classmethod
     def _append_obj(cls, obj):
@@ -130,10 +131,10 @@ class SpriteObj():
         """
         if obj is None:
             raise RuntimeError('Expect SpriteObj but None')
-        if obj.name in cls.__obj_dict:
+        if obj.name in cls._obj_dict:
             raise RuntimeError(
                 'name [%s] has been used for another SpriteObj' % obj.name)
-        cls.__obj_dict[obj.name] = obj
+        cls._obj_dict[obj.name] = obj
 
     @classmethod
     def _delete_obj(cls, name_or_obj):
@@ -143,20 +144,20 @@ class SpriteObj():
             name_or_obj (TYPE): Description
         """
         if isinstance(name_or_obj, cls):
-            cls.__obj_dead.append(name_or_obj.name)
+            cls._obj_dead.append(name_or_obj.name)
         else:
-            cls.__obj_dead.append(name_or_obj)
+            cls._obj_dead.append(name_or_obj)
 
     @classmethod
     def _update_all(cls):
         """re-draw all managed object on screen
         """
-        while cls.__obj_dead:
-            name = cls.__obj_dead.pop()
-            if name in cls.__obj_dict:
+        while cls._obj_dead:
+            name = cls._obj_dead.pop()
+            if name in cls._obj_dict:
                 # print('del %s' % name)
-                del cls.__obj_dict[name]
-        for obj in cls.__obj_dict.values():
+                del cls._obj_dict[name]
+        for obj in cls._obj_dict.values():
             obj._update()
 
     @classmethod
@@ -173,16 +174,16 @@ class SpriteObj():
         Raises:
             IOError: Description
         """
-        if image_file not in cls.__image_cache:
+        if image_file not in cls._image_cache:
             if image_file.endswith('.png') or alpha:
                 surf = pygame.image.load(image_file).convert_alpha()
             else:
                 surf = pygame.image.load(image_file).convert()
             if surf:
-                cls.__image_cache[image_file] = surf
+                cls._image_cache[image_file] = surf
             else:
                 raise IOError('fail to load image %s' % image_file)
-        return cls.__image_cache[image_file]
+        return cls._image_cache[image_file]
 
     @property
     def name(self):
@@ -219,6 +220,22 @@ class SpriteObj():
             TYPE: Description
         """
         return self._surf
+
+    def set_pos(self, xy_or_x, y=None):
+        pos = xy_or_x if y is None else (xy_or_x, y)
+        self._vpos = Vec2d(pos)
+
+    @property
+    def topleft(self):
+        return self._rect.topleft
+
+    @property
+    def bottomleft(self):
+        return self._rect.bottomleft
+
+    @property
+    def bottomleft(self):
+        return self._rect.bottomleft
 
     @property
     def pos(self):
@@ -287,7 +304,8 @@ class SpriteObj():
             obj_rect = self._rotate_surf.get_rect(
                 center=(self._vpos[0], self._vpos[1]))
         else:
-            obj_rect = self._surf.get_rect(center=(self._vpos[0], self._vpos[1]))
+            obj_rect = self._surf.get_rect(
+                center=(self._vpos[0], self._vpos[1]))
         return not scr_rect.colliderect(obj_rect)
 
     def collide_objs(self, objs):
@@ -302,10 +320,8 @@ class SpriteObj():
         cobjs = []
         if objs:
             for obj in objs:
-                self_rect = self._surf.get_rect(
-                    center=(self._vpos[0], self._vpos[1]))
-                obj_rect = obj._surf.get_rect(
-                    center=(obj.vpos[0], obj.vpos[1]))
+                self_rect = self.surf.get_rect(center=self.pos)
+                obj_rect = obj.surf.get_rect(center=obj.pos)
                 if self_rect.colliderect(obj_rect):
                     cobjs.append(obj)
         return cobjs
@@ -450,10 +466,7 @@ class SpriteObj():
             xy_or_x (TYPE): Description
             y (None, optional): Description
         """
-        if y is not None:
-            self._vpos = Vec2d(xy_or_x, y)
-        else:
-            self._vpos = Vec2d(xy_or_x)
+        self.set_pos(xy_or_x, y)
 
     def set_auto_move(self, speed, dir):
         """Summary
@@ -617,6 +630,39 @@ class SpriteObj():
             self._surf = self._costume[self._costume_used]
         except IndexError as err:
             pass
+
+
+class SpriteBar(SpriteObj):
+
+    def __init__(self, name='', value=100, max=100, min=0, width=64, height=10,
+                 front_color='red', back_color='black', border_color='white',
+                 front_color2=None):
+        super().__init__(name)
+        self.value = value
+        self.val_max = max
+        self.val_min = min
+        self.bar_width = width
+        self.bar_height = height
+        self.front_color = front_color
+        self.back_color = back_color
+        self.border_color = border_color
+        self.border = 1
+
+    def _update(self):
+        fc = Color(self.front_color) if isinstance(
+            self.front_color, str) else Color(*self.front_color)
+        bc = Color(self.back_color) if isinstance(
+            self.back_color, str) else Color(*self.back_color)
+        dc = Color(self.border_color) if isinstance(
+            self.border_color, str) else Color(*self.border_color)
+        self._surf = pygame.Surface((self.bar_width, self.bar_height))
+        bg_rect = self._surf.fill(bc)
+        bar_rect = bg_rect.copy()
+        bar_rect.width = bg_rect.width * \
+            ((self.value - self.val_min) / (self.val_max - self.val_min))
+        pygame.draw.rect(self._surf, fc, bar_rect, 0)
+        pygame.draw.rect(self._surf, dc, bg_rect, self.border)
+        super()._update()
 
 
 def set_event(name_or_id, func=None):
@@ -919,8 +965,8 @@ def get_sprite(name, defval=None):
     Returns:
         TYPE: Description
     """
-    if name in SpriteObj.__obj_dict:
-        return SpriteObj.__obj_dict[name]
+    if name in SpriteObj._obj_dict:
+        return SpriteObj._obj_dict[name]
     else:
         return defval
 
@@ -937,8 +983,8 @@ def get_sprite_owner(name, defval=None):
     Returns:
         TYPE: Description
     """
-    if name in SpriteObj.__obj_dict:
-        return SpriteObj.__obj_dict[name].owner
+    if name in SpriteObj._obj_dict:
+        return SpriteObj._obj_dict[name].owner
     else:
         return defval
 
@@ -949,24 +995,30 @@ def all_sprite():
     Returns:
         TYPE: Description
     """
-    return SpriteObj.__obj_dict
+    return SpriteObj._obj_dict
+
+
+def draw_box(width, height, color, bgcolor, border=0):
+    fc = Color(color) if isinstance(color, str) else Color(*color)
+    bc = Color(bgcolor) if isinstance(bgcolor, str) else Color(*bgcolor)
+    obj = SpriteObj()
+    obj._surf = pygame.Surface((width, height))
+    obj._rect = pygame.draw.rect(obj._surf, fc, obj._surf.fill(bc), border)
+    return obj
 
 
 def create_sprite(name, owner=None, images=None, xy_or_x=None, y=None):
     """create a SpriteObj with a name
-    - name: string: if name end with 'XXXXXX', use object id to replace the end 'XXXXXX'
-    - owner: obj: set owner for sprite, used for get owner if has sprite
-    - images: string/list: init the costume from image file path / file list
 
     Args:
-        name (TYPE): Description
-        owner (None, optional): Description
-        images (None, optional): Description
-        xy_or_x (None, optional): Description
-        y (None, optional): Description
+    - name (str): unique name, support auto-name which end with 'XXXXXX'
+    - owner (obj, optional): set owner for sprite, used for get owner if has sprite
+    - images (str/list, optional): init the costume from image file path / file list
+    - xy_or_x (tuple/int, optional): init position / x
+    - y (int, optional): init y
 
     Returns:
-        TYPE: Description
+    - obj: create SpriteObj
     """
     obj = SpriteObj(name)
     if owner is not None:
@@ -988,7 +1040,7 @@ def delete_sprite(obj):
     SpriteObj._delete_obj(obj)
 
 
-def keysed(key_name):
+def key_pressed(key_name):
     """return True if key pressed
 
     Args:
@@ -1054,7 +1106,7 @@ def get_sprite_by_name(prefix):
         TYPE: Description
     """
     objs = []
-    for name, obj in SpriteObj.__obj_dict.items():
+    for name, obj in SpriteObj._obj_dict.items():
         if name.startswith(prefix):
             objs.append(obj)
     return objs
@@ -1072,7 +1124,7 @@ def get_sprite_in_pos(xy_or_x, y=None):
     """
     objs = []
     pos = (xy_or_x, y) if y is not None else xy_or_x
-    for obj in SpriteObj.__obj_dict.values():
+    for obj in SpriteObj._obj_dict.values():
         if obj.in_pos(pos):
             objs.append(obj)
     return objs

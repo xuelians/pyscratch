@@ -45,7 +45,7 @@ if __name__ == '__main__':
 Scratch Method
 
 
-| *Scratch Motion*                  | SpriteObj Methods     | Notes             |
+| *Scratch Motion*                  | *SpriteObj Methods*   | *Notes*           |
 |-----                              |-----                  |-----              |
 | move (10) step                    | obj.move(10)          |
 |                                   | obj.move_to(x, y)     | new               |
@@ -54,14 +54,14 @@ Scratch Method
 | point to direction (90)           | obj.point_dir(90)     | support rotate    |
 | point to mouse                    | obj.point_mouse()     | support rotate    |
 | point to sprite                   | obj.point_obj(obj)    | support rotate    |
-| glide (1) secs to x (11) y (2)    | obj.glide_to(1, 11, 2) | <font color=red>not yet</font>    |
+| glide (1) secs to x (11) y (2)    | obj.glide_to(1, 11, 2) | **not yet**>    |
 | change x by (10)                  | obj.change_x(10)      |
 | set x to (10)                     | obj.set_x(10)         |
 | change y by (10)                  | obj.change_y(10)      |
 | set y to (10)                     | obj.set_y(10)         |
 |                                   | obj.set_pos(x, y)     | alias of obj.move_to()  |
-| if on edge, bounce                | obj.edge_bounce = True | <font color=red>not yet</font>      |
-| set rotate style (left-right)     |                       | <font color=red>not support</font> |
+| if on edge, bounce                | obj.edge_bounce = True | **not yet**      |
+| set rotate style (left-right)     |                       | **not support** |
 | x position                        | obj.pos_x             | attr    |
 | y position                        | obj.pos_y             | attr    |
 | direction                         | obj.dir               | attr    |

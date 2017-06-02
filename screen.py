@@ -354,7 +354,7 @@ class SpriteObj(object):
 
     # Motions Methods
     @property
-    def direction(self):
+    def dir(self):
         """return a float angle as current moving direction, 0 is up, 90 is right
 
         Returns:
@@ -372,7 +372,7 @@ class SpriteObj(object):
         """
         self._vdir = self._vdir.rotate(angle)
         if rotate:
-            self._rotate_angle = int(self.direction)
+            self._rotate_angle = int(self.dir)
 
     def point_dir(self, angle, rotate=False):
         """
@@ -385,7 +385,7 @@ class SpriteObj(object):
         """
         self._vdir = Vec2d(0, -1).rotate(angle)
         if rotate:
-            self._rotate_angle = int(self.direction)
+            self._rotate_angle = int(self.dir)
 
     def turn_left(self, angle, rotate=False):
         """

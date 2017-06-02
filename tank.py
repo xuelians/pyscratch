@@ -19,19 +19,19 @@ if __name__ == '__main__':
 
     # main-loop
     speed = 2
-    while screen.closed() == False:
+    while not screen.closed:
         tick = screen.run()
         if screen.key_pressed('up'):
-            tank.set_dir(0, rotate=True)
+            tank.point_dir(0, rotate=True)
             tank.move(speed)
         elif screen.key_pressed('down'):
-            tank.set_dir(180, rotate=True)
+            tank.point_dir(180, rotate=True)
             tank.move(speed)
         elif screen.key_pressed('left'):
-            tank.set_dir(270, rotate=True)
+            tank.point_dir(270, rotate=True)
             tank.change_x(-speed)
         elif screen.key_pressed('right'):
-            tank.set_dir(90, rotate=True)
+            tank.point_dir(90, rotate=True)
             tank.change_x(speed)
         elif screen.key_pressed('space'):
             tank.point_mouse(rotate=True)

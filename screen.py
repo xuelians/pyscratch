@@ -195,15 +195,6 @@ class SpriteObj(object):
         return self._name
 
     @property
-    def oid(self):
-        """sprite object unique id (int)
-
-        Returns:
-            TYPE: Description
-        """
-        return self._oid
-
-    @property
     def owner(self):
         """return the owner of sprite (obj)
 
@@ -212,18 +203,14 @@ class SpriteObj(object):
         """
         return self._owner
 
-    @property
-    def surf(self):
-        """sprite display surface (refer to pygame.surface)
+    # @property
+    # def surf(self):
+    #     """sprite display surface (refer to pygame.surface)
 
-        Returns:
-            TYPE: Description
-        """
-        return self._surf
-
-    def set_pos(self, xy_or_x, y=None):
-        pos = xy_or_x if y is None else (xy_or_x, y)
-        self._vpos = Vec2d(pos)
+    #     Returns:
+    #         TYPE: Description
+    #     """
+    #     return self._surf
 
     @property
     def topleft(self):
@@ -263,6 +250,10 @@ class SpriteObj(object):
             TYPE: Description
         """
         return self._vpos[1]
+
+    def set_pos(self, xy_or_x, y=None):
+        pos = xy_or_x if y is None else (xy_or_x, y)
+        self._vpos = Vec2d(pos)
 
     def set_owner(self, value):
         """
@@ -320,8 +311,8 @@ class SpriteObj(object):
         cobjs = []
         if objs:
             for obj in objs:
-                self_rect = self.surf.get_rect(center=self.pos)
-                obj_rect = obj.surf.get_rect(center=obj.pos)
+                self_rect = self._surf.get_rect(center=self.pos)
+                obj_rect = obj._surf.get_rect(center=obj.pos)
                 if self_rect.colliderect(obj_rect):
                     cobjs.append(obj)
         return cobjs
@@ -362,7 +353,8 @@ class SpriteObj(object):
         self._hidden = True
 
     # Motions Methods
-    def get_dir(self):
+    @property
+    def direction(self):
         """return a float angle as current moving direction, 0 is up, 90 is right
 
         Returns:
@@ -380,20 +372,20 @@ class SpriteObj(object):
         """
         self._vdir = self._vdir.rotate(angle)
         if rotate:
-            self._rotate_angle = int(self.get_dir())
+            self._rotate_angle = int(self.direction)
 
-    def set_dir(self, angle, rotate=False):
+    def point_dir(self, angle, rotate=False):
         """
         Set the angle as current moving direction
         - angle: 0~360, 0 for up, 90 for right, 180 for down, 270 for left
 
         Args:
-            angle (TYPE): Description
+            angle (int): Description
             rotate (bool, optional): Description
         """
         self._vdir = Vec2d(0, -1).rotate(angle)
         if rotate:
-            self._rotate_angle = int(self.get_dir())
+            self._rotate_angle = int(self.direction)
 
     def turn_left(self, angle, rotate=False):
         """
@@ -424,14 +416,11 @@ class SpriteObj(object):
             y (None, optional): Description
             rotate (bool, optional): Description
         """
-        if y is not None:
-            mdir = Vec2d(xy_or_x, y) - self._vpos
-        else:
-            mdir = Vec2d(xy_or_x) - self._vpos
+        pos = xy_or_x if y is None else (xy_or_x, y)
+        mdir = Vec2d(pos) - self._vpos
         if mdir != (0, 0):
-            self._vdir = mdir.normalize()
-        if rotate:
-            self._rotate_angle = int(self.get_dir())
+            angle = Vec2d(0, -1).angle_to(mdir)
+            self.point_dir(angle, rotate=rotate)
 
     def point_mouse(self, rotate=False):
         """Set current moving direction to mouse postion
@@ -477,7 +466,7 @@ class SpriteObj(object):
         """
         self._am_enabled = True
         self._am_speed = speed
-        self.set_dir(dir, True)
+        self.point_dir(dir, True)
 
     def change_x(self, amount):
         """Change the x position by this amount
@@ -512,8 +501,7 @@ class SpriteObj(object):
         self._vpos[1] = amount
 
     def _rotate(self):
-        """Summary
-        """
+        """Create a rotated surface"""
         if self._rotate_angle != self._rotate_angle2:
             angle = self._rotate_angle
             # print(angle)
@@ -739,6 +727,8 @@ def __update_key_mouse():
     """
     this.keys = __convert_pressed_keys()
     this.mouse_pos = pygame.mouse.get_pos()
+    this.mouse_x = this.mouse_pos[0]
+    this.mouse_y = this.mouse_pos[1]
     this.mouse_rel = pygame.mouse.get_rel()
     this.mouse_btn = pygame.mouse.get_pressed()
 
@@ -867,13 +857,13 @@ def __update_background():
     """Summary
     """
     obj = get_sprite('__backdrop__')
-    if obj and obj.surf:
-        backdrop_heigth = obj.surf.get_height()
-        backdrop_width = obj.surf.get_width()
+    if obj and obj._surf:
+        backdrop_heigth = obj._surf.get_height()
+        backdrop_width = obj._surf.get_width()
         screen_width, screen_height = this.size
         for y in range(0, screen_height, backdrop_heigth):
             for x in range(0, screen_width, backdrop_width):
-                this.__screen.blit(obj.surf, (x, y))
+                this.__screen.blit(obj._surf, (x, y))
 
 
 def get_backdrop():
@@ -1184,6 +1174,8 @@ this.__event_cb = {}  # event name (string) : event cb (function)
 this.keys = []  # for performance
 this.mouse_btn = (0, 0, 0)
 this.mouse_pos = (0, 0)
+this.mouse_x = 0
+this.mouse_y = 0
 this.mouse_rel = (0, 0)
 this.fps = 0
 __init_event()

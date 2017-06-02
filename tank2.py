@@ -40,7 +40,7 @@ class TankObj():
     def fire(self, btn_press):
         if btn_press:
             if not self._fire_colddown or screen.now_time() - self._fire_colddown > 200:
-                mdir = self.head.get_dir()
+                mdir = self.head.direction
                 obj = screen.create_sprite(
                     'bullet_XXXXXX', self, './pics/bullet1.png', self.foot.pos)
                 obj.set_auto_move(5, mdir)

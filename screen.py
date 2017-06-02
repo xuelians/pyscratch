@@ -68,8 +68,9 @@ class SpriteObj(object):
         self._costume = []
         self._costume_used = 0
         self._rotate_angle = 0
-        self._rotate_angle2 = 0  # rotated angle for performance
+        self._rotate_angle2 = None  # rotated angle for performance
         self._rotate_surf = None
+        self._size = 100
         # for motion
         self._vdir = Vec2d(0, -1)  # point up
         self._vpos = Vec2d(0, 0)  # position
@@ -225,6 +226,28 @@ class SpriteObj(object):
         return self._rect.bottomleft
 
     @property
+    def size_h(self):
+        if self._surf is not None:
+            return self._surf.get_width() * self._size / 100
+        return 0
+
+    @property
+    def size_w(self):
+        if self._surf is not None:
+            return self._surf.get_height() * self._size / 100
+        return 0
+
+    @property
+    def size(self):
+        return self._size
+
+    def set_size(self, amount):
+        self._size = amount
+    
+    def change_size(self, amount):
+        self._size += amount
+
+    @property
     def pos(self):
         """return (x,y) of current position
 
@@ -327,10 +350,7 @@ class SpriteObj(object):
             return
         if self._surf is not None:
             scr = pygame.display.get_surface()
-            if self._rotate_angle:
-                self.__rotate()
-            else:
-                self._rotate_surf = self._surf
+            self.__rotate_n_scale()
             rect = self._rotate_surf.get_rect(
                 center=(self._vpos[0], self._vpos[1]))
             scr.blit(self._rotate_surf, rect)
@@ -501,18 +521,20 @@ class SpriteObj(object):
         """
         self._vpos[1] = amount
 
-    def __rotate(self):
+    def __rotate_n_scale(self):
         """Create a rotated surface"""
         if self._rotate_angle != self._rotate_angle2:
+            # scale
+            rect_scale = self._size / 100
+            # rotate
             angle = self._rotate_angle
-            # print(angle)
-            org_rect = self._surf.get_rect()
-            rect_scale = 1
             arc = math.radians(angle)
+            org_rect = self._surf.get_rect()
+            org_rect = self._surf.get_rect()
             new_w = int((abs(org_rect.width * math.cos(arc)) +
-                         abs(org_rect.height * math.sin(arc))) / rect_scale)
+                         abs(org_rect.height * math.sin(arc))) * rect_scale)
             new_h = int((abs(org_rect.width * math.sin(arc)) +
-                         abs(org_rect.height * math.cos(arc))) / rect_scale)
+                         abs(org_rect.height * math.cos(arc))) * rect_scale)
             new_surf = pygame.transform.rotate(self._surf, -angle)
             new_surf = pygame.transform.scale(new_surf, (new_w, new_h))
             self._rotate_surf = new_surf
@@ -605,6 +627,7 @@ class SpriteObj(object):
         """
         try:
             self._surf = self._costume[index]
+            self._rotate_angle2 = None # force update
             self._costume_used = index
         except IndexError as err:
             pass
@@ -618,6 +641,7 @@ class SpriteObj(object):
             self._costume_used = 0  # back to first costume
         try:
             self._surf = self._costume[self._costume_used]
+            self._rotate_angle2 = None # force update
         except IndexError as err:
             pass
 
@@ -833,24 +857,25 @@ def run():
 def __update_status_bar():
     """Summary
     """
-    status_text = "fps=%d x=%d y=%d btn=%s key=%s" % (this.fps,
-                                                      *this.mouse_pos,
-                                                      this.mouse_btn,
-                                                      '+'.join(this.keys))
-    screen_width, screen_height = this.size
-    font_height = this.__font_obj.get_linesize()
-    font_color = (255, 200, 0)  # orange
-    font_bgcolor = (0, 0, 0)  # black
-    # clean old text
-    font_surf = pygame.Surface((screen_width, font_height))
-    font_rect = font_surf.fill(font_bgcolor).move(
-        0, screen_height - font_height)
-    this.__screen.blit(font_surf, font_rect)
-    # print(status_text)
-    font_surf = this.__font_obj.render(
-        status_text, True, font_color, font_bgcolor)
-    font_rect = font_surf.get_rect().move(0, screen_height - font_height)
-    this.__screen.blit(font_surf, font_rect)
+    if this.status_bar:
+        status_text = "fps=%d x=%d y=%d btn=%s key=%s" % (this.fps,
+                                                        *this.mouse_pos,
+                                                        this.mouse_btn,
+                                                        '+'.join(this.keys))
+        screen_width, screen_height = this.size
+        font_height = this.__font_obj.get_linesize()
+        font_color = (255, 200, 0)  # orange
+        font_bgcolor = (0, 0, 0)  # black
+        # clean old text
+        font_surf = pygame.Surface((screen_width, font_height))
+        font_rect = font_surf.fill(font_bgcolor).move(
+            0, screen_height - font_height)
+        this.__screen.blit(font_surf, font_rect)
+        # print(status_text)
+        font_surf = this.__font_obj.render(
+            status_text, True, font_color, font_bgcolor)
+        font_rect = font_surf.get_rect().move(0, screen_height - font_height)
+        this.__screen.blit(font_surf, font_rect)
 
 
 def __update_sprites():
@@ -1177,7 +1202,7 @@ pygame.init()
 # this is a pointer to the module object instance itself.
 this = sys.modules[__name__]
 # we can explicitly make assignments on it
-this.__status_bar = True
+this.status_bar = True
 this.__font_family = 'Console'
 this.__font_size = 16
 this.__font_obj = pygame.font.SysFont(this.__font_family, this.__font_size)

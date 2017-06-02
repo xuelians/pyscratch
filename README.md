@@ -81,7 +81,7 @@ Scratch Method
 | set colro effect as 0             | |
 | clear graphic effect              | |
 | change size by 10                 | obj.change_size(10) |
-| set size to 100%                  | obj.size_size(100) | 
+| set size to 100%                  | obj.set_size(100) | 
 | go to front                       | obj.go_front() |
 | go back 1 layout                  | obj.back_layout(1) |
 | custome #                         | obj.custome | 

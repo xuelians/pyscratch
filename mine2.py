@@ -1,14 +1,14 @@
 
 import screen
 
-ROW = 10
-COL = 10
+ROW = 20
+COL = 20
+SIZE = 32
+
 
 class BlockObj():
     def __init__(self, x, y):
         name = 'block_%d_%d' % (x, y)
-        posx = x * 64 + 32
-        posy = y * 64 + 32
         images = [
             './pics/0.png', './pics/1.png', './pics/2.png',
             './pics/3.png', './pics/4.png', './pics/5.png',
@@ -16,10 +16,12 @@ class BlockObj():
             './pics/mine2.png', './pics/flag.png',
             './pics/unknown.png',  # 11
             './pics/mine.png',  # 12
-            './pics/mine3.png' # 13
+            './pics/mine3.png'  # 13
         ]
-        self.body = screen.create_sprite(name, self, images, posx, posy)
+        self.body = screen.create_sprite(name, self, images)
         self.body.switch_costume(11)
+        self.body.set_size(SIZE / 64 * 100)
+        self.body.move_to(x * SIZE + SIZE / 2, y * SIZE + SIZE / 2)
         self.x = x
         self.y = y
         self.mine = False
@@ -63,9 +65,6 @@ class BlockObj():
         return blocks
 
 
-
-
-
 def put_mines(row, column, num):
     while num > 0:
         x = screen.random_num(0, column)
@@ -86,6 +85,7 @@ def create_blocks(row, column):
     # put mine
     put_mines(row, column, ROW * COL / 10)
 
+
 def game_is_win():
     not_opened = 0
     for y in range(0, ROW):
@@ -95,6 +95,7 @@ def game_is_win():
                 not_opened += 1
     return not_opened == 0
 
+
 def game_is_lost():
     mine_opened = 0
     for y in range(0, ROW):
@@ -103,6 +104,7 @@ def game_is_lost():
             if b.mine and b.opened:
                 mine_opened += 1
     return mine_opened > 0
+
 
 def game_over(msg):
     for y in range(0, ROW):
@@ -116,14 +118,15 @@ def game_over(msg):
                 else:
                     b.body.switch_costume(12)
             else:
-                pass # ignore opened block
+                pass  # ignore opened block
     print(msg)
     screen.set_event(6, None)
 
+
 def on_mouse_down(pos, button):
     if screen.mouse_down():
-        x = screen.mouse_x // 64
-        y = screen.mouse_y // 64
+        x = screen.mouse_x // SIZE
+        y = screen.mouse_y // SIZE
         b = screen.get_sprite_owner('block_%d_%d' % (x, y))
         if b is not None:
             if screen.mouse_down('left'):
@@ -135,12 +138,13 @@ def on_mouse_down(pos, button):
         if game_is_lost():
             game_over('LOST')
 
+
 def main():
     screen.set_size(640, 640)
     screen.set_event(6, on_mouse_down)
+    screen.status_bar = False
 
     create_blocks(ROW, COL)
-
 
     while not screen.closed:
         screen.run()

@@ -58,6 +58,36 @@ Scratch Method
 | backdrop name | screen.backdrop.name |
 | size | obj.size | 
 
+| Sensing                 |         |
+|-----                  |-----    |
+| touch mouse      | obj.is_touch_mouse()        |
+| touch edge      | obj.is_touch_edge()        |
+| touch sprtie      | obj.is_touch_obj(obj)        |
+| touch color       |       |
+| color1 touch color2       |       |
+| distance to mouse       | obj.distance_to_mouse()       |
+| distance to sprtie       | obj.distance_to_obj(obj)       |
+| ask xxxx and wait   | |
+| answer    | |
+| key 'space' pressed? | screen.key_pressed('space') |
+| mouse down? | screen.mouse_down() |
+| mouse x | screem.mouse_x |
+| mouse y | screen.mouse_y |
+| loudness | |
+| video motion on sprite | |
+| turn video on/off | |
+| set video transparency 10% | |
+| timer | |
+| reset timer | |
+| x position of sprite | |
+| y position of sprite | |
+| direction of sprite | |
+| custume # of sprite | |
+| custume name of sprite | |
+| size of sprite | |
+| volumne of sprite | |
+
+
 
 
 

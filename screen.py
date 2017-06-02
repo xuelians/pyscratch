@@ -328,7 +328,7 @@ class SpriteObj(object):
         if self._surf is not None:
             scr = pygame.display.get_surface()
             if self._rotate_angle:
-                self._rotate()
+                self.__rotate()
             else:
                 self._rotate_surf = self._surf
             rect = self._rotate_surf.get_rect(
@@ -443,19 +443,20 @@ class SpriteObj(object):
         """move steps on current moving direction
 
         Args:
-            steps (TYPE): Description
+          - steps (int): Description
         """
         self._vpos += self._vdir * steps
 
     def move_to(self, xy_or_x, y=None):
         """
-        set sprite center to given position (pixel x & y) with sprite left-top
+        set sprite center to given position (pixel x & y)
 
         Args:
-            xy_or_x (TYPE): Description
-            y (None, optional): Description
+          - xy (tuple): position (x,y)
+          - x, y (int): position x and y
         """
-        self.set_pos(xy_or_x, y)
+        pos = xy_or_x if y is None else (xy_or_x, y)
+        self.set_pos(pos)
 
     def set_auto_move(self, speed, dir):
         """Summary
@@ -472,7 +473,7 @@ class SpriteObj(object):
         """Change the x position by this amount
 
         Args:
-            amount (TYPE): Description
+          - amount (int): step in x-arix (postive to right)
         """
         self._vpos[0] += amount
 
@@ -480,7 +481,7 @@ class SpriteObj(object):
         """Change the y position by this amount
 
         Args:
-            amount (TYPE): Description
+          - amount (int): step in y-arix (postive to up)
         """
         self._vpos[1] += amount
 
@@ -488,7 +489,7 @@ class SpriteObj(object):
         """Set the x position of a sprite
 
         Args:
-            amount (TYPE): Description
+          - amount (int): position x
         """
         self._vpos[0] = amount
 
@@ -496,11 +497,11 @@ class SpriteObj(object):
         """Change the y position by this amount
 
         Args:
-            amount (TYPE): Description
+          - amount (int): position y
         """
         self._vpos[1] = amount
 
-    def _rotate(self):
+    def __rotate(self):
         """Create a rotated surface"""
         if self._rotate_angle != self._rotate_angle2:
             angle = self._rotate_angle
@@ -523,12 +524,12 @@ class SpriteObj(object):
         Insert 1 image surface object into costume list.
 
         Args:
-            image_surf (:obj:pygame.Surface): inserted image surface object
-            index (int, optional): insert position, default as None.
+          - image_surf (:obj:pygame.Surface): inserted image surface object
+          - index (int, optional): insert position, default as None.
                 None: means append the image surface and end of costume list
 
         Returns:
-            int: the image surface's position in list
+          - int: the image surface's position in list
         """
         num = len(self._costume)
         if index:
@@ -550,12 +551,12 @@ class SpriteObj(object):
         Insert one / a list images into costumes list
 
         Args:
-            image_file (str / list): one or a list of image file path
-            index (int, optional): insert position of images, default as None.
+          - image_file (str / list): one or a list of image file path
+          - index (int, optional): insert position of images, default as None.
                 None means append the image at end of costumes list
 
         Returns:
-            int: position of first added image in costumes list
+          - int: position of first added image in costumes list
         """
         flist = image_file if isinstance(image_file, list) else [image_file]
         pos_list = []
@@ -573,21 +574,22 @@ class SpriteObj(object):
         then switch the first image as current costum.
 
         Args:
-            image_file (str / list): one or a list of image file path
-            index (int, optional): insert position of images, default as None.
+          - image_file (str / list): one or a list of image file path
+          - index (int, optional): insert position of images, default as None.
                 None means append the image at end of costumes list
         """
         index = self.add_costume(image_file, index)
         self.switch_costume(index)
 
     def del_costume(self, index=None):
-        """Summary
+        """
+        delete a costume, default delete last one
 
         Args:
-            index (None, optional): Description
+          - index (int, optional): the sequence of deleted costume
 
         Returns:
-            TYPE: Description
+          - (Surface, optional): deleted Surface object
         """
         if index:
             return self._costume.pop(index)
@@ -599,7 +601,7 @@ class SpriteObj(object):
         Switch costumes to change the look of a sprite
 
         Args:
-            index (TYPE): Description
+          - index (int): index in list
         """
         try:
             self._surf = self._costume[index]
@@ -709,11 +711,7 @@ def draw_image(image_file, pos_x, pos_y):
 
 
 def __convert_pressed_keys():
-    """convert pressed key list to name list
-
-    Returns:
-        TYPE: Description
-    """
+    """convert pressed key list to name list"""
     name = []
     press = pygame.key.get_pressed()
     for i in range(0, len(press)):
@@ -722,15 +720,22 @@ def __convert_pressed_keys():
     return name
 
 
+def __convert_mouse_button():
+    """convert pressed mouse button to a string"""
+    btn = pygame.mouse.get_pressed()
+    name = 'l' if btn[0] else ''
+    name += 'm' if btn[1] else ''
+    name += 'r' if btn[2] else ''
+    return name
+
 def __update_key_mouse():
-    """save key and mouse to global
-    """
+    """save key and mouse to global"""
     this.keys = __convert_pressed_keys()
     this.mouse_pos = pygame.mouse.get_pos()
     this.mouse_x = this.mouse_pos[0]
     this.mouse_y = this.mouse_pos[1]
     this.mouse_rel = pygame.mouse.get_rel()
-    this.mouse_btn = pygame.mouse.get_pressed()
+    this.mouse_btn = __convert_mouse_button()
 
 
 def __call_user_cb(event):
@@ -828,9 +833,10 @@ def run():
 def __update_status_bar():
     """Summary
     """
-    status_text = "fps=%d x=%d y=%d key=%s" % (this.fps,
-                                               *this.mouse_pos,
-                                               '+'.join(this.keys))
+    status_text = "fps=%d x=%d y=%d btn=%s key=%s" % (this.fps,
+                                                      *this.mouse_pos,
+                                                      this.mouse_btn,
+                                                      '+'.join(this.keys))
     screen_width, screen_height = this.size
     font_height = this.__font_obj.get_linesize()
     font_color = (255, 200, 0)  # orange
@@ -1154,6 +1160,18 @@ def random_pos():
     return (x, y)
 
 
+def mouse_down(button='any'):
+    """return True if mouse button is pressed"""
+    if button.lower() in ['left', 'lbutton', 'l']:
+        return 'l' in this.mouse_btn
+    elif button.lower() in ['middle', 'mbutton', 'm']:
+        return 'm' in this.mouse_btn
+    elif button.lower() in ['right', 'rbutton', 'r']:
+        return 'r' in this.mouse_btn
+    else:
+        return this.mouse_btn != ''
+
+
 # init window when module imported
 pygame.init()
 # this is a pointer to the module object instance itself.
@@ -1172,7 +1190,7 @@ this.__clock = pygame.time.Clock()
 this.__event_dict = {}  # event id (int) : event name (string)
 this.__event_cb = {}  # event name (string) : event cb (function)
 this.keys = []  # for performance
-this.mouse_btn = (0, 0, 0)
+this.mouse_btn = ''
 this.mouse_pos = (0, 0)
 this.mouse_x = 0
 this.mouse_y = 0

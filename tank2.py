@@ -64,7 +64,7 @@ class TankObj():
         if screen.key_pressed('right'):
             self.turn_right()
         self._aim()
-        self.fire(screen.mouse_btn[0])
+        self.fire(screen.mouse_down('left'))
 
 
 class TargetObj():

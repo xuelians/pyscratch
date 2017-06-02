@@ -50,7 +50,7 @@ def create_blocks(row, column):
 
 
 def on_mouse_down():
-    if screen.mouse_btn[0]:
+    if screen.mouse_down():
         x = screen.mouse_pos[0] // 64
         y = screen.mouse_pos[1] // 64
         b = screen.get_sprite_owner('block_%d_%d' % (x, y))

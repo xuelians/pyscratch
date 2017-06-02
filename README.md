@@ -36,6 +36,27 @@ Scratch Method
 - y position -> obj.pos_y
 - direction -> obj.dir
 
+| Looks                 |         |
+|-----                  |-----    |
+| say hello for 2 sec   |         |
+| say hello             |         |
+| think hmm.. for 2 sec   |         |
+| think hmm..             |         |
+| show | obj.show() |
+| hide | obj.hide() |
+| switch costume to 2 |  obj.switch_costume(2) |
+| next costume        | obj.next_costume() |
+| switch backdrop to 2 |  screen.switch_backdrop(2) |
+| change color effect by 5 | |
+| set colro effect as 0 | |
+| clear graphic effect | |
+| change size by 10 | obj.change_size(10) |
+| set size to 100% | obj.size_size(100) | 
+| go to front | obj.go_front() |
+| go back 1 layout | obj.back_layout(1) |
+| custome # | obj.custome | 
+| backdrop name | screen.backdrop.name |
+| size | obj.size | 
 
 
 

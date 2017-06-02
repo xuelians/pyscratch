@@ -1010,8 +1010,8 @@ def create_sprite(name, owner=None, images=None, xy_or_x=None, y=None):
     - name (str): unique name, support auto-name which end with 'XXXXXX'
     - owner (obj, optional): set owner for sprite, used for get owner if has sprite
     - images (str/list, optional): init the costume from image file path / file list
-    - xy_or_x (tuple/int, optional): init position / x
-    - y (int, optional): init y
+    - xy (tuple): position (x,y)
+    - x, y (int, optional): position x & y
 
     Returns:
     - obj: create SpriteObj

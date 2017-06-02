@@ -54,7 +54,7 @@ Scratch Method
 | point to direction (90)           | obj.point_dir(90)     | support rotate    |
 | point to mouse                    | obj.point_mouse()     | support rotate    |
 | point to sprite                   | obj.point_obj(obj)    | support rotate    |
-| glide (1) secs to x (11) y (2)    | obj.glide_to(1, 11, 2) | **not yet**>    |
+| glide (1) secs to x (11) y (2)    | obj.glide_to(1, 11, 2) | **not yet**    |
 | change x by (10)                  | obj.change_x(10)      |
 | set x to (10)                     | obj.set_x(10)         |
 | change y by (10)                  | obj.change_y(10)      |

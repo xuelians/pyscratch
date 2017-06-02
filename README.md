@@ -86,6 +86,9 @@ Scratch Method
 | custume name of sprite | |
 | size of sprite | |
 | volumne of sprite | |
+| current year/month/.../second |  |
+| day since 2000 | |
+| username | |
 
 
 
